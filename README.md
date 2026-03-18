@@ -12,6 +12,10 @@
 
 ### 🧩 组件系统
 - **基础组件**：文本、图片、按钮（基于 Vant 4）
+- **表单组件**：输入框、单选框、复选框、开关
+- **展示组件**：分割线、卡片、标签、进度条
+- **布局组件**：容器、间距
+- **营销组件**：轮播图、倒计时、公告栏
 - **动态属性配置**：根据组件类型自动生成配置表单
 - **样式编辑**：支持内边距、外边距、背景色、圆角等
 - **组件嵌套**：支持递归嵌套渲染
@@ -42,6 +46,12 @@
 - **自动保存**：页面数据自动保存到 localStorage
 - **刷新不丢失**：页面刷新后自动恢复上次编辑状态
 
+### 🤖 AI 生成页面
+- **智能生成**：通过自然语言描述生成页面结构
+- **组件 Catalog**：基于 Zod Schema 的组件定义，AI 友好
+- **快速原型**：输入需求即可快速生成页面原型
+- **可编辑优化**：生成后可继续在编辑器中调整优化
+
 ## 🛠️ 技术栈
 
 ### 核心框架
@@ -65,6 +75,8 @@
 - **@vueuse/core**：Vue 组合式工具集
 - **nanoid**：唯一 ID 生成
 - **qrcode**：二维码生成
+- **zod**：TypeScript 优先的 Schema 验证库
+- **vue-draggable-plus**：拖拽功能增强
 
 ## 📁 项目结构
 
@@ -94,10 +106,24 @@ h5-editor/
 │   │   ├── widgets/               # 可拖拽组件库
 │   │   │   ├── TextWidget.vue     # 文本组件
 │   │   │   ├── ImageWidget.vue    # 图片组件
-│   │   │   └── ButtonWidget.vue   # 按钮组件
+│   │   │   ├── ButtonWidget.vue   # 按钮组件
+│   │   │   ├── InputWidget.vue    # 输入框组件
+│   │   │   ├── RadioWidget.vue    # 单选框组件
+│   │   │   ├── CheckboxWidget.vue # 复选框组件
+│   │   │   ├── SwitchWidget.vue   # 开关组件
+│   │   │   ├── DividerWidget.vue  # 分割线组件
+│   │   │   ├── CardWidget.vue     # 卡片组件
+│   │   │   ├── TagWidget.vue      # 标签组件
+│   │   │   ├── ProgressWidget.vue # 进度条组件
+│   │   │   ├── ContainerWidget.vue # 容器组件
+│   │   │   ├── SpacerWidget.vue   # 间距组件
+│   │   │   ├── SwiperWidget.vue   # 轮播图组件
+│   │   │   ├── CountdownWidget.vue # 倒计时组件
+│   │   │   └── NoticeWidget.vue   # 公告栏组件
 │   │   │
 │   │   └── dialogs/               # 对话框组件
-│   │       └── PublishDialog.vue  # 发布对话框
+│   │       ├── PublishDialog.vue  # 发布对话框
+│   │       └── AIGenerateDialog.vue # AI 生成对话框
 │   │
 │   ├── stores/                    # Pinia 状态管理
 │   │   ├── index.ts               # Store 入口
@@ -113,6 +139,11 @@ h5-editor/
 │   ├── utils/                     # 工具函数
 │   │   ├── schema-generator.ts    # JSON Schema 生成器
 │   │   └── export.ts              # 页面导出工具
+│   │
+│   ├── ai/                        # AI 生成相关
+│   │   ├── catalog.ts             # 组件 Catalog（Zod Schema）
+│   │   ├── prompt-generator.ts    # AI 提示词生成器
+│   │   └── mock-generator.ts      # Mock 页面生成器
 │   │
 │   ├── config/                    # 配置文件
 │   │   ├── components.ts          # 组件库配置
@@ -171,7 +202,6 @@ pnpm preview
 
 ### 3. 撤销/重做
 - 点击工具栏的撤销/重做按钮
-- 或使用快捷键：Ctrl+Z（撤销）、Ctrl+Y（重做）
 
 ### 4. 使用模板
 - 点击工具栏的"模板"按钮
@@ -183,7 +213,13 @@ pnpm preview
 - 页面数据会自动保存到浏览器本地存储
 - 刷新页面后会自动恢复
 
-### 6. 发布页面
+### 6. AI 生成页面
+- 点击工具栏的"AI 生成"按钮
+- 输入页面需求描述（如"产品介绍页面"、"活动宣传页面"）
+- 点击"生成页面"，AI 将自动生成页面结构
+- 生成后可继续在编辑器中调整优化
+
+### 7. 发布页面
 - 点击工具栏的"发布"按钮
 - 选择导出格式：
   - **HTML**：下载可独立运行的 HTML 文件
@@ -245,8 +281,3 @@ MIT License
 ## 👥 贡献
 
 欢迎提交 Issue 和 Pull Request！
-
----
-
-**开发完成时间**：2026-03-17
-**技术栈版本**：Vue 3.5 + Vite 7.0 + TypeScript 5.9 + Element Plus 2.13 + Vant 4.9
