@@ -1,0 +1,194 @@
+<script setup lang="ts">
+/**
+ * 工具栏组件
+ */
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useEditorStore } from '@/stores/editor'
+import { useHistoryStore } from '@/stores/history'
+import { ElButton, ElButtonGroup, ElTooltip, ElMessage, ElMessageBox } from 'element-plus'
+import PublishDialog from '@/components/dialogs/PublishDialog.vue'
+import AIGenerateDialog from '@/components/dialogs/AIGenerateDialog.vue'
+
+const router = useRouter()
+const editorStore = useEditorStore()
+const historyStore = useHistoryStore()
+
+// 发布对话框显示状态
+const showPublishDialog = ref(false)
+
+// AI 生成对话框显示状态
+const showAIGenerateDialog = ref(false)
+
+// 撤销
+function handleUndo() {
+  const prevPage = historyStore.undo()
+  if (prevPage) {
+    editorStore.currentPage = prevPage
+  }
+}
+
+// 重做
+function handleRedo() {
+  const nextPage = historyStore.redo()
+  if (nextPage) {
+    editorStore.currentPage = nextPage
+  }
+}
+
+// 预览
+function handlePreview() {
+  editorStore.toggleMode()
+}
+
+// 保存
+function handleSave() {
+  const success = editorStore.savePage()
+  if (success) {
+    ElMessage.success('保存成功')
+  }
+  else {
+    ElMessage.error('保存失败')
+  }
+}
+
+// 清空
+function handleClear() {
+  ElMessageBox.confirm('确定要清空页面吗？此操作不可恢复。', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  }).then(() => {
+    editorStore.clearPage()
+    ElMessage.success('已清空')
+  }).catch(() => {})
+}
+
+// 打开模板市场
+function handleOpenTemplates() {
+  router.push('/templates')
+}
+
+// 发布
+function handlePublish() {
+  showPublishDialog.value = true
+}
+
+// AI 生成
+function handleAIGenerate() {
+  showAIGenerateDialog.value = true
+}
+</script>
+
+<template>
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <h2 class="title">
+        H5 编辑器
+      </h2>
+    </div>
+
+    <div class="toolbar-center">
+      <ElButtonGroup>
+        <ElTooltip content="撤销 (Ctrl+Z)">
+          <ElButton
+            :disabled="!historyStore.canUndo"
+            @click="handleUndo"
+          >
+            <i class="i-tabler-arrow-back-up" />
+          </ElButton>
+        </ElTooltip>
+
+        <ElTooltip content="重做 (Ctrl+Y)">
+          <ElButton
+            :disabled="!historyStore.canRedo"
+            @click="handleRedo"
+          >
+            <i class="i-tabler-arrow-forward-up" />
+          </ElButton>
+        </ElTooltip>
+      </ElButtonGroup>
+
+      <ElButton @click="handleOpenTemplates">
+        <i class="i-tabler-template" />
+        模板
+      </ElButton>
+
+      <ElButton @click="handleAIGenerate">
+        <i class="i-tabler-sparkles" />
+        AI 生成
+      </ElButton>
+
+      <ElButton @click="handlePreview">
+        <i class="i-tabler-eye" />
+        {{ editorStore.mode === 'edit' ? '预览' : '编辑' }}
+      </ElButton>
+
+      <ElButton type="primary" @click="handleSave">
+        <i class="i-tabler-device-floppy" />
+        保存
+      </ElButton>
+
+      <ElButton type="success" @click="handlePublish">
+        <i class="i-tabler-rocket" />
+        发布
+      </ElButton>
+
+      <ElButton type="danger" @click="handleClear">
+        <i class="i-tabler-trash" />
+        清空
+      </ElButton>
+    </div>
+
+    <div class="toolbar-right">
+      <ElButton text>
+        <i class="i-tabler-settings" />
+      </ElButton>
+    </div>
+
+    <!-- 发布对话框 -->
+    <PublishDialog v-model="showPublishDialog" />
+
+    <!-- AI 生成对话框 -->
+    <AIGenerateDialog v-model="showAIGenerateDialog" />
+  </div>
+</template>
+
+<style scoped>
+.toolbar {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: #fff;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.toolbar-left {
+  flex: 1;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+  margin: 0;
+}
+
+.toolbar-center {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.toolbar-right {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.el-button i {
+  font-size: 18px;
+}
+</style>
