@@ -18,6 +18,7 @@ import {
   ElSwitch,
   ElSlider,
 } from 'element-plus'
+import ImageListEditor from './ImageListEditor.vue'
 
 interface Props {
   schema: PropSchema
@@ -149,6 +150,12 @@ const value = computed({
           <el-button>选择</el-button>
         </template>
       </ElInput>
+
+      <!-- 图片列表 -->
+      <ImageListEditor
+        v-else-if="schema.type === PropType.ImageList"
+        v-model="value"
+      />
 
       <!-- 未知类型 -->
       <div v-else class="unknown-type">

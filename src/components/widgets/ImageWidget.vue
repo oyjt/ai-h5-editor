@@ -2,7 +2,7 @@
 /**
  * 图片组件 Widget
  */
-import { computed } from 'vue'
+import { Image as VanImage } from 'vant'
 
 interface Props {
   src?: string
@@ -21,29 +21,18 @@ const props = withDefaults(defineProps<Props>(), {
   objectFit: 'cover',
   borderRadius: '0',
 })
-
-const imageStyle = computed(() => ({
-  width: props.width,
-  height: props.height,
-  objectFit: props.objectFit,
-  borderRadius: props.borderRadius,
-}))
 </script>
 
 <template>
-  <div class="image-widget">
-    <img :src="src" :alt="alt" :style="imageStyle">
-  </div>
+  <VanImage
+    :src="src"
+    :alt="alt"
+    :width="width"
+    :height="height"
+    :fit="objectFit"
+    :radius="borderRadius"
+  />
 </template>
 
 <style scoped>
-.image-widget {
-  display: block;
-  overflow: hidden;
-}
-
-.image-widget img {
-  display: block;
-  max-width: 100%;
-}
 </style>

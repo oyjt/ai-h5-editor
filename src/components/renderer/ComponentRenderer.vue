@@ -2,7 +2,7 @@
 /**
  * 组件渲染器 - 根据 ComponentSchema 动态渲染组件
  */
-import { computed, h } from 'vue'
+import { computed } from 'vue'
 import type { ComponentSchema } from '@/types/schema'
 import { getComponentConfig } from '@/config/components'
 import { useEditorStore } from '@/stores/editor'

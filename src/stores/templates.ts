@@ -6,7 +6,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { Template } from '@/types/template'
 import { TemplateCategory } from '@/types/template'
-import { getAllTemplates, getTemplatesByCategory } from '@/config/templates'
+import { getAllTemplates } from '@/config/templates'
 
 export const useTemplatesStore = defineStore('templates', () => {
   // 模板列表

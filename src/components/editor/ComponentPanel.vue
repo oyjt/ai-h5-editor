@@ -12,13 +12,13 @@ import { ElMessage } from 'element-plus'
 
 const editorStore = useEditorStore()
 
-// 组件分类（带展开状态）
+// 组件分类（带展开状态）- 参照 Vant 组件库分类
 const categories = ref([
   { id: ComponentCategory.Basic, name: '基础组件', icon: 'i-tabler-layout-grid', expanded: true },
   { id: ComponentCategory.Form, name: '表单组件', icon: 'i-tabler-forms', expanded: false },
   { id: ComponentCategory.Display, name: '展示组件', icon: 'i-tabler-photo', expanded: false },
+  { id: ComponentCategory.Navigation, name: '导航组件', icon: 'i-tabler-compass', expanded: false },
   { id: ComponentCategory.Layout, name: '布局组件', icon: 'i-tabler-layout', expanded: false },
-  { id: ComponentCategory.Marketing, name: '营销组件', icon: 'i-tabler-speakerphone', expanded: false },
 ])
 
 // 切换分类展开状态
@@ -72,10 +72,10 @@ function handleClone(original: any) {
 </script>
 
 <template>
-  <div class="w-280px h-full bg-white border-r border-gray-200 flex flex-col">
+  <div class="w-280px h-full bg-[var(--editor-bg-tertiary)] border-r border-[var(--border-color)] flex flex-col">
     <!-- 头部 -->
-    <div class="px-20px py-16px border-b border-gray-200">
-      <h3 class="m-0 text-16px font-600 text-gray-800">
+    <div class="px-20px py-16px border-b border-[var(--border-color)]">
+      <h3 class="m-0 text-16px font-600 text-[var(--text-primary)]">
         组件库
       </h3>
     </div>
@@ -89,8 +89,8 @@ function handleClone(original: any) {
       >
         <!-- 分类标题 -->
         <div
-          class="flex items-center justify-between px-12px py-10px rounded-6px cursor-pointer transition-all duration-200 hover:bg-gray-50"
-          :class="cat.expanded ? 'bg-blue-50 text-blue-600' : 'text-gray-600'"
+          class="flex items-center justify-between px-12px py-10px rounded-[var(--radius-panel)] cursor-pointer transition-all duration-200 hover:bg-[var(--editor-bg-secondary)]"
+          :class="cat.expanded ? 'bg-blue-500/10 text-blue-400' : 'text-[var(--text-secondary)]'"
           @click="toggleCategory(cat.id)"
         >
           <div class="flex items-center gap-8px">
@@ -116,11 +116,11 @@ function handleClone(original: any) {
           <div
             v-for="comp in getCategoryComponents(cat.id)"
             :key="comp.type"
-            class="flex flex-col items-center gap-8px px-12px py-16px bg-gray-50 rounded-8px cursor-move transition-all duration-200 hover:bg-gray-100 hover:-translate-y-2px hover:shadow-md"
+            class="flex flex-col items-center gap-8px px-12px py-16px bg-[var(--editor-bg-secondary)] rounded-[var(--radius-panel)] cursor-move transition-all duration-200 hover:bg-[var(--editor-bg-primary)] hover:-translate-y-2px hover:shadow-md"
             @click="handleAddComponent(comp.type)"
           >
-            <i :class="comp.icon" class="text-24px text-blue-500" />
-            <span class="text-13px text-gray-600">{{ comp.name }}</span>
+            <i :class="comp.icon" class="text-24px text-blue-400" />
+            <span class="text-13px text-[var(--text-secondary)]">{{ comp.name }}</span>
           </div>
         </VueDraggable>
       </div>

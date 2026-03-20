@@ -19,10 +19,12 @@ export interface Template {
 }
 
 // 模板分类
-export enum TemplateCategory {
-  Marketing = 'marketing', // 营销活动
-  Product = 'product', // 产品展示
-  Form = 'form', // 表单收集
-  Article = 'article', // 文章资讯
-  Other = 'other', // 其他
-}
+export const TemplateCategory = {
+  Marketing: 'marketing', // 营销活动
+  Product: 'product', // 产品展示
+  Form: 'form', // 表单收集
+  Article: 'article', // 文章资讯
+  Other: 'other', // 其他
+} as const
+
+export type TemplateCategory = typeof TemplateCategory[keyof typeof TemplateCategory]

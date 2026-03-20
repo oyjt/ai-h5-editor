@@ -16,13 +16,15 @@ export interface ComponentConfig {
   propSchema: PropSchema[] // 属性配置 Schema
 }
 
-// 组件分类
+// 组件分类（参照 Vant 组件库分类）
 export const ComponentCategory = {
   Basic: 'basic', // 基础组件
   Form: 'form', // 表单组件
+  Feedback: 'feedback', // 反馈组件
   Display: 'display', // 展示组件
+  Navigation: 'navigation', // 导航组件
+  Business: 'business', // 业务组件
   Layout: 'layout', // 布局组件
-  Marketing: 'marketing', // 营销组件
 } as const
 
 export type ComponentCategory = typeof ComponentCategory[keyof typeof ComponentCategory]
@@ -53,6 +55,7 @@ export const PropType = {
   Switch: 'switch', // 开关
   Slider: 'slider', // 滑块
   Image: 'image', // 图片上传
+  ImageList: 'imageList', // 图片列表
   Date: 'date', // 日期选择
 } as const
 

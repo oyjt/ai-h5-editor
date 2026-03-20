@@ -1,0 +1,149 @@
+/**
+ * 全局样式 - 深色模式主题
+ */
+
+/* 重置样式 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 主题色系统 */
+:root {
+  /* 圆角规范 */
+  --radius-panel: 8px;
+  --radius-button: 4px;
+  --radius-tag: 2px;
+
+  /* 品牌色 */
+  --color-primary: #409eff;
+  --color-success: #67c23a;
+  --color-warning: #e6a23c;
+  --color-danger: #f56c6c;
+}
+
+/* 深色模式主题 */
+[data-theme='dark'] {
+  /* 编辑器背景 */
+  --editor-bg-primary: #1e1e1e;
+  --editor-bg-secondary: #252526;
+  --editor-bg-tertiary: #2d2d30;
+
+  /* 文字颜色 */
+  --text-primary: #e4e7ed;
+  --text-secondary: #909399;
+  --text-tertiary: #606266;
+
+  /* 边框颜色 */
+  --border-color: #3e3e42;
+
+  /* 阴影 */
+  --shadow-toolbar: 0 4px 20px rgba(0, 0, 0, 0.3);
+  --shadow-panel: 0 2px 12px rgba(0, 0, 0, 0.2);
+
+  /* 网格背景 */
+  --grid-dot-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 亮色模式主题 */
+[data-theme='light'] {
+  /* 编辑器背景 */
+  --editor-bg-primary: #f5f7fa;
+  --editor-bg-secondary: #ffffff;
+  --editor-bg-tertiary: #ffffff;
+
+  /* 文字颜色 */
+  --text-primary: #303133;
+  --text-secondary: #606266;
+  --text-tertiary: #909399;
+
+  /* 边框颜色 */
+  --border-color: #dcdfe6;
+
+  /* 阴影 */
+  --shadow-toolbar: 0 2px 12px rgba(0, 0, 0, 0.1);
+  --shadow-panel: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+  /* 网格背景 */
+  --grid-dot-color: rgba(0, 0, 0, 0.08);
+}
+
+/* 点状网格背景 */
+.dot-grid-bg {
+  background-color: var(--editor-bg-secondary);
+  background-image: radial-gradient(circle, var(--grid-dot-color) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--editor-bg-secondary);
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: #4e4e4e;
+  border-radius: 4px;
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
+  background: #5e5e5e;
+}
+
+[data-theme='light'] ::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+[data-theme='light'] ::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* 拖拽预览效果 */
+.dragging-ghost {
+  opacity: 0.5;
+  transform: rotate(5deg);
+}
+
+/* 平滑过渡 */
+.smooth-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 响应式约束 */
+@media (max-width: 1280px) {
+  body::before {
+    content: '请使用桌面端访问（最小宽度：1280px）';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--editor-bg-primary);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    z-index: 9999;
+  }
+}

@@ -2,10 +2,11 @@
 /**
  * 工具栏组件
  */
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useEditorStore } from '@/stores/editor'
 import { useHistoryStore } from '@/stores/history'
+import { useThemeStore } from '@/stores/theme'
 import { ElButton, ElButtonGroup, ElTooltip, ElMessage, ElMessageBox } from 'element-plus'
 import PublishDialog from '@/components/dialogs/PublishDialog.vue'
 import AIGenerateDialog from '@/components/dialogs/AIGenerateDialog.vue'
@@ -13,6 +14,10 @@ import AIGenerateDialog from '@/components/dialogs/AIGenerateDialog.vue'
 const router = useRouter()
 const editorStore = useEditorStore()
 const historyStore = useHistoryStore()
+const themeStore = useThemeStore()
+
+// 主题图标
+const themeIcon = computed(() => themeStore.theme === 'dark' ? 'i-tabler-sun' : 'i-tabler-moon')
 
 // 发布对话框显示状态
 const showPublishDialog = ref(false)
@@ -78,6 +83,12 @@ function handlePublish() {
 function handleAIGenerate() {
   showAIGenerateDialog.value = true
 }
+
+// 切换主题
+function handleToggleTheme() {
+  themeStore.toggleTheme()
+  ElMessage.success(`已切换到${themeStore.theme === 'dark' ? '深色' : '亮色'}模式`)
+}
 </script>
 
 <template>
@@ -141,6 +152,11 @@ function handleAIGenerate() {
     </div>
 
     <div class="toolbar-right">
+      <ElTooltip :content="`切换到${themeStore.theme === 'dark' ? '亮色' : '深色'}模式`">
+        <ElButton text @click="handleToggleTheme">
+          <i :class="themeIcon" />
+        </ElButton>
+      </ElTooltip>
       <ElButton text>
         <i class="i-tabler-settings" />
       </ElButton>
@@ -161,8 +177,11 @@ function handleAIGenerate() {
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  background: #fff;
-  border-bottom: 1px solid #e4e7ed;
+  background: var(--editor-bg-tertiary);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--shadow-toolbar);
+  position: relative;
+  z-index: 50;
 }
 
 .toolbar-left {
@@ -172,7 +191,7 @@ function handleAIGenerate() {
 .title {
   font-size: 18px;
   font-weight: 600;
-  color: #303133;
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -190,5 +209,10 @@ function handleAIGenerate() {
 
 .el-button i {
   font-size: 18px;
+}
+
+/* 按钮圆角规范 */
+:deep(.el-button) {
+  border-radius: var(--radius-button);
 }
 </style>

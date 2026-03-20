@@ -2,13 +2,20 @@
 /**
  * 属性配置面板 - 配置选中组件的属性和样式
  */
-import { computed } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
+import { useDebounceFn } from '@vueuse/core'
 import { useEditorStore } from '@/stores/editor'
 import { getComponentConfig } from '@/config/components'
-import { ElEmpty, ElButton } from 'element-plus'
-import FormItem from './FormItem.vue'
+import { ElEmpty, ElButton, ElTabs, ElTabPane } from 'element-plus'
+import PropsPanel from './panels/PropsPanel.vue'
+import StylePanel from './panels/StylePanel.vue'
+import AnimationPanel from './panels/AnimationPanel.vue'
+import EventPanel from './panels/EventPanel.vue'
 
 const editorStore = useEditorStore()
+
+// 当前激活的Tab
+const activeTab = ref('props')
 
 // 选中的组件
 const selectedComponent = computed(() => editorStore.selectedComponent)
@@ -21,24 +28,48 @@ const componentConfig = computed(() => {
   return getComponentConfig(selectedComponent.value.type)
 })
 
-// 更新属性
-function updateProp(key: string, value: any) {
+// 防抖更新属性 (300ms)
+const debouncedUpdateProp = useDebounceFn((key: string, value: any) => {
   if (!selectedComponent.value) {
     return
   }
   editorStore.updateComponentProps(selectedComponent.value.id, {
     [key]: value,
   })
-}
+}, 300)
 
-// 更新样式
-function updateStyle(key: string, value: any) {
+// 防抖更新样式 (300ms)
+const debouncedUpdateStyle = useDebounceFn((key: string, value: any) => {
   if (!selectedComponent.value) {
     return
   }
   editorStore.updateComponentStyles(selectedComponent.value.id, {
     [key]: value,
   })
+}, 300)
+
+// 更新属性
+function updateProp(key: string, value: any) {
+  debouncedUpdateProp(key, value)
+}
+
+// 更新样式
+function updateStyle(key: string, value: any) {
+  debouncedUpdateStyle(key, value)
+}
+
+// 更新事件
+function updateEvent(key: string, value: any) {
+  if (!selectedComponent.value) {
+    return
+  }
+  const events = { ...selectedComponent.value.events }
+  if (value === null || value === undefined) {
+    delete events[key]
+  } else {
+    events[key] = value
+  }
+  editorStore.updateComponent(selectedComponent.value.id, { events })
 }
 
 // 删除组件
@@ -48,105 +79,77 @@ function handleDelete() {
   }
   editorStore.deleteComponent(selectedComponent.value.id)
 }
+
+// 监听选中组件变化，平滑滚动到可视区域
+watch(selectedComponent, async (newComponent, oldComponent) => {
+  // 只在真正切换组件时才重置Tab（通过ID判断）
+  const isComponentChanged = newComponent?.id !== oldComponent?.id
+
+  if (newComponent) {
+    await nextTick()
+    const element = document.querySelector(`[data-component-id="${newComponent.id}"]`)
+    if (element) {
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'center',
+      })
+    }
+  }
+
+  // 只在切换到不同组件时重置到属性Tab
+  if (isComponentChanged) {
+    activeTab.value = 'props'
+  }
+})
 </script>
 
 <template>
-  <div class="w-320px h-full bg-white border-l border-l-solid border-l-#e4e7ed flex flex-col">
-    <div class="px-20px py-16px border-b border-b-solid border-b-#e4e7ed">
-      <h3 class="m-0 text-16px font-600 color-#303133">
-        属性配置
-      </h3>
+  <div class="property-panel">
+    <div class="panel-header">
+      <h3 class="panel-title">属性配置</h3>
     </div>
 
-    <div class="flex-1 overflow-y-auto p-20px">
+    <div class="panel-content">
       <ElEmpty v-if="!selectedComponent" description="请选择一个组件" />
 
-      <div v-else class="flex flex-col gap-24px">
-        <!-- 基本信息 -->
-        <div class="border-b border-b-solid border-b-#e4e7ed pb-20px last:border-b-none">
-          <h4 class="m-0 mb-16px text-14px font-600 color-#303133">
-            基本信息
-          </h4>
-          <div class="mb-12px">
-            <label class="block mb-6px text-13px color-#606266">组件类型</label>
-            <div class="px-12px py-8px bg-#f5f7fa rounded-4px text-13px color-#303133 font-mono break-all">
-              {{ componentConfig?.name || selectedComponent.type }}
-            </div>
-          </div>
-          <div class="mb-12px">
-            <label class="block mb-6px text-13px color-#606266">组件 ID</label>
-            <div class="px-12px py-8px bg-#f5f7fa rounded-4px text-13px color-#303133 font-mono break-all">
-              {{ selectedComponent.id }}
-            </div>
-          </div>
-        </div>
-
-        <!-- 属性配置 -->
-        <div v-if="componentConfig?.propSchema.length" class="border-b border-b-solid border-b-#e4e7ed pb-20px last:border-b-none">
-          <h4 class="m-0 mb-16px text-14px font-600 color-#303133">
-            属性配置
-          </h4>
-          <FormItem
-            v-for="propSchema in componentConfig.propSchema"
-            :key="propSchema.key"
-            :schema="propSchema"
-            :model-value="selectedComponent.props[propSchema.key]"
-            @update:model-value="updateProp(propSchema.key, $event)"
-          />
-        </div>
-
-        <!-- 样式配置 -->
-        <div class="border-b border-b-solid border-b-#e4e7ed pb-20px last:border-b-none">
-          <h4 class="m-0 mb-16px text-14px font-600 color-#303133">
-            样式配置
-          </h4>
-
-          <!-- 内边距 -->
-          <div class="mb-16px">
-            <label class="block mb-8px text-13px font-500 color-#606266">内边距</label>
-            <el-input
-              :model-value="selectedComponent.styles.padding || ''"
-              placeholder="如：8px 16px"
-              @update:model-value="updateStyle('padding', $event)"
+      <div v-else class="panel-tabs">
+        <ElTabs v-model="activeTab" class="property-tabs">
+          <ElTabPane label="属性" name="props">
+            <PropsPanel
+              v-if="componentConfig"
+              :component="selectedComponent"
+              :config="componentConfig"
+              @update-prop="updateProp"
             />
-          </div>
+          </ElTabPane>
 
-          <!-- 外边距 -->
-          <div class="mb-16px">
-            <label class="block mb-8px text-13px font-500 color-#606266">外边距</label>
-            <el-input
-              :model-value="selectedComponent.styles.margin || ''"
-              placeholder="如：8px 16px"
-              @update:model-value="updateStyle('margin', $event)"
+          <ElTabPane label="样式" name="style">
+            <StylePanel
+              :component="selectedComponent"
+              @update-style="updateStyle"
             />
-          </div>
+          </ElTabPane>
 
-          <!-- 背景色 -->
-          <div class="mb-16px">
-            <label class="block mb-8px text-13px font-500 color-#606266">背景色</label>
-            <el-color-picker
-              class="w-full!"
-              :model-value="selectedComponent.styles.backgroundColor || ''"
-              show-alpha
-              @update:model-value="updateStyle('backgroundColor', $event)"
+          <ElTabPane label="动画" name="animation">
+            <AnimationPanel
+              :component="selectedComponent"
+              @update-style="updateStyle"
             />
-          </div>
+          </ElTabPane>
 
-          <!-- 圆角 -->
-          <div class="mb-16px">
-            <label class="block mb-8px text-13px font-500 color-#606266">圆角</label>
-            <el-input
-              :model-value="selectedComponent.styles.borderRadius || ''"
-              placeholder="如：4px"
-              @update:model-value="updateStyle('borderRadius', $event)"
+          <ElTabPane label="事件" name="events">
+            <EventPanel
+              :component="selectedComponent"
+              @update-event="updateEvent"
             />
-          </div>
-        </div>
+          </ElTabPane>
+        </ElTabs>
 
         <!-- 操作按钮 -->
-        <div class="border-b border-b-solid border-b-#e4e7ed pb-20px last:border-b-none">
+        <div class="panel-actions">
           <ElButton type="danger" plain block @click="handleDelete">
-            <i class="i-tabler-trash" />
+            <i class="i-tabler-trash mr-4px" />
             删除组件
           </ElButton>
         </div>
@@ -154,3 +157,86 @@ function handleDelete() {
     </div>
   </div>
 </template>
+
+<style scoped>
+.property-panel {
+  width: 320px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--editor-bg-tertiary);
+  border-left: 1px solid var(--border-color);
+}
+
+.panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.panel-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.panel-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-tabs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.property-tabs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+:deep(.el-tabs__header) {
+  margin: 0;
+  padding: 0 20px;
+  background: var(--editor-bg-secondary);
+}
+
+:deep(.el-tabs__nav-wrap) {
+  padding: 8px 0;
+}
+
+:deep(.el-tabs__item) {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  padding: 0 16px;
+  height: 36px;
+  line-height: 36px;
+}
+
+:deep(.el-tabs__item.is-active) {
+  color: var(--el-color-primary);
+}
+
+:deep(.el-tabs__content) {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+:deep(.el-tab-pane) {
+  height: 100%;
+}
+
+.panel-actions {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-color);
+  background: var(--editor-bg-tertiary);
+}
+</style>

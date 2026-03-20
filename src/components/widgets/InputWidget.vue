@@ -2,12 +2,13 @@
 /**
  * 输入框组件 Widget
  */
-import { computed } from 'vue'
+import { ref } from 'vue'
+import { Field as VanField } from 'vant'
 
 interface Props {
   placeholder?: string
   value?: string
-  type?: 'text' | 'number' | 'password' | 'tel' | 'email'
+  type?: 'text' | 'number' | 'password' | 'tel' | 'digit'
   disabled?: boolean
   readonly?: boolean
   maxlength?: number
@@ -23,60 +24,25 @@ const props = withDefaults(defineProps<Props>(), {
   clearable: false,
 })
 
-const inputClass = computed(() => ({
-  'input-disabled': props.disabled,
-  'input-readonly': props.readonly,
-}))
+const inputValue = ref(props.value)
 </script>
 
 <template>
   <div class="input-widget">
-    <input
+    <VanField
+      v-model="inputValue"
       :type="type"
-      :value="value"
       :placeholder="placeholder"
       :disabled="disabled"
       :readonly="readonly"
       :maxlength="maxlength"
-      :class="inputClass"
-      class="input-field"
-    >
+      :clearable="clearable"
+    />
   </div>
 </template>
 
 <style scoped>
 .input-widget {
   width: 100%;
-}
-
-.input-field {
-  width: 100%;
-  padding: 10px 12px;
-  font-size: 14px;
-  line-height: 1.5;
-  color: #333;
-  background-color: #fff;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.input-field:focus {
-  border-color: #409eff;
-}
-
-.input-field::placeholder {
-  color: #c0c4cc;
-}
-
-.input-disabled {
-  background-color: #f5f7fa;
-  color: #c0c4cc;
-  cursor: not-allowed;
-}
-
-.input-readonly {
-  background-color: #f5f7fa;
 }
 </style>

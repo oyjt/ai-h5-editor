@@ -13,6 +13,7 @@ const editorStore = useEditorStore()
 
 // 拖拽状态
 const isDragOver = ref(false)
+const isDragging = ref(false)
 
 // 处理组件选择
 function handleSelectComponent(id: string) {
@@ -29,6 +30,11 @@ function handleUpdateOrder(components: any[]) {
   editorStore.updateComponentsOrder(components)
 }
 
+// 拖拽开始
+function handleDragStart() {
+  isDragging.value = true
+}
+
 // 拖拽进入
 function handleDragOver(e: DragEvent) {
   e.preventDefault()
@@ -40,6 +46,12 @@ function handleDragOver(e: DragEvent) {
 
 // 拖拽离开
 function handleDragLeave() {
+  isDragOver.value = false
+}
+
+// 拖拽结束
+function handleDragEnd() {
+  isDragging.value = false
   isDragOver.value = false
 }
 
@@ -75,15 +87,32 @@ function handleDrop(e: DragEvent) {
 
 <template>
   <div class="canvas">
-    <div class="canvas-wrapper">
+    <!-- 画布容器 -->
+    <div class="canvas-container">
       <div
-        class="phone-frame"
-        :class="{ 'drag-over': isDragOver }"
+        class="device-frame"
+        :class="{ 'drag-over': isDragOver, 'dragging': isDragging }"
+        @dragstart="handleDragStart"
         @dragover="handleDragOver"
         @dragleave="handleDragLeave"
         @drop="handleDrop"
+        @dragend="handleDragEnd"
       >
-        <div class="phone-screen">
+        <div class="device-screen">
+          <!-- 灵动岛 -->
+          <div class="dynamic-island" />
+
+          <!-- 状态栏 -->
+          <div class="status-bar">
+            <div class="status-left">
+              <span class="time">9:41</span>
+            </div>
+            <div class="status-right">
+              <i class="i-tabler-wifi" />
+              <i class="i-tabler-battery-3" />
+            </div>
+          </div>
+
           <!-- 页面渲染区域 -->
           <div class="page-content">
             <PageRenderer
@@ -96,6 +125,9 @@ function handleDrop(e: DragEvent) {
               @update-order="handleUpdateOrder"
             />
           </div>
+
+          <!-- Home 指示条 -->
+          <div class="home-indicator" />
         </div>
       </div>
     </div>
@@ -106,96 +138,213 @@ function handleDrop(e: DragEvent) {
 .canvas {
   flex: 1;
   height: 100%;
-  background: #f5f7fa;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--editor-bg-secondary);
+  /* 10px 间隔的淡点网格 */
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.08) 1px, transparent 1px);
+  background-size: 10px 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 画布容器 */
+.canvas-container {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 40px;
+  overflow: auto;
+  position: relative;
 }
 
-.canvas-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.phone-frame {
+/* 设备框架 - iPhone X 高保真模拟 */
+.device-frame {
   width: 375px;
-  background: #fff;
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  padding: 12px;
-  transition: all 0.3s;
+  height: 812px;
+  background: linear-gradient(145deg, #1a1a1c 0%, #2d2d30 100%);
+  border-radius: 42px;
+  /* 模拟真实 iPhone X 的多层阴影和边框 */
+  box-shadow:
+    /* 内边框高光 */
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    /* 金属边框 */
+    0 0 0 3px #3a3a3c,
+    0 0 0 4px rgba(0, 0, 0, 0.3),
+    /* 外层阴影 */
+    0 0 0 12px rgba(0, 0, 0, 0.05),
+    0 16px 48px rgba(0, 0, 0, 0.3),
+    0 32px 96px rgba(0, 0, 0, 0.2);
+  padding: 16px;
+  /* 平滑过渡动画 */
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
 }
 
-.phone-frame.drag-over {
-  box-shadow: 0 8px 32px rgba(64, 158, 255, 0.3);
+/* 侧边按钮 - 左侧音量键 */
+.device-frame::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: 120px;
+  width: 4px;
+  height: 60px;
+  background: linear-gradient(90deg, #2a2a2c 0%, #3a3a3c 100%);
+  border-radius: 2px 0 0 2px;
+  box-shadow:
+    inset 1px 0 2px rgba(0, 0, 0, 0.5),
+    -1px 0 2px rgba(0, 0, 0, 0.3);
+}
+
+/* 侧边按钮 - 右侧电源键 */
+.device-frame::after {
+  content: '';
+  position: absolute;
+  right: -4px;
+  top: 140px;
+  width: 4px;
+  height: 80px;
+  background: linear-gradient(270deg, #2a2a2c 0%, #3a3a3c 100%);
+  border-radius: 0 2px 2px 0;
+  box-shadow:
+    inset -1px 0 2px rgba(0, 0, 0, 0.5),
+    1px 0 2px rgba(0, 0, 0, 0.3);
+}
+
+.device-frame.drag-over {
+  box-shadow:
+    0 0 0 8px rgba(64, 158, 255, 0.1),
+    0 8px 32px rgba(64, 158, 255, 0.3),
+    0 16px 64px rgba(64, 158, 255, 0.2),
+    0 0 0 2px var(--color-primary);
   transform: scale(1.02);
 }
 
-.phone-screen {
+.device-frame.dragging {
+  opacity: 0.8;
+}
+
+/* 设备屏幕 */
+.device-screen {
   width: 100%;
-  min-height: 667px;
+  height: 100%;
   background: #fff;
-  border-radius: 12px;
-  overflow: hidden;
+  border-radius: 30px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  /* iOS 风格滚动 */
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  /* 玻璃质感 */
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.05),
+    inset 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
+/* Dynamic Island - 灵动岛 */
+.dynamic-island {
+  position: sticky;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 126px;
+  height: 37px;
+  background: #000;
+  border-radius: 0 0 20px 20px;
+  z-index: 9999;
+  box-shadow:
+    inset 0 -1px 3px rgba(255, 255, 255, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  margin: 0 auto;
+}
+
+/* 状态栏 */
+.status-bar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  padding-top: 12px;
+  z-index: 9998;
+  pointer-events: none;
+  font-size: 15px;
+  font-weight: 600;
+  color: #000;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  background: #fff;
+  margin-top: -37px; /* 补偿灵动岛高度 */
+}
+
+.status-left,
+.status-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-left {
+  flex: 1;
+}
+
+.status-right {
+  flex: 1;
+  justify-content: flex-end;
+  font-size: 17px;
+}
+
+.time {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.3px;
+}
+
+/* 页面内容区域 */
 .page-content {
-  width: 100%;
-  min-height: 667px;
-}
-
-.empty-state {
+  min-height: calc(100% - 54px - 20px); /* 减去状态栏和底部空间 */
+  max-height: calc(100% - 54px - 20px); /* 限制最大高度，防止超出屏幕 */
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 667px;
-  color: #909399;
 }
 
-.empty-state i {
-  font-size: 64px;
-  margin-bottom: 16px;
-  opacity: 0.5;
+/* Home 指示条 */
+.home-indicator {
+  position: sticky;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 134px;
+  height: 5px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
+  z-index: 9998;
+  pointer-events: none;
+  margin-top: auto;
 }
 
-.empty-state p {
-  font-size: 14px;
-  margin: 0;
+/* 自定义滚动条样式 */
+.device-screen::-webkit-scrollbar {
+  width: 3px;
 }
 
-.components-container {
-  padding: 16px;
+.device-screen::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 54px 0 20px 0; /* 避开状态栏和底部指示条 */
 }
 
-.component-wrapper {
-  margin-bottom: 12px;
-  padding: 16px;
-  border: 2px dashed transparent;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s;
+.device-screen::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 2px;
+  transition: background 0.2s ease;
 }
 
-.component-wrapper:hover {
-  border-color: #409eff;
-  background: #ecf5ff;
-}
-
-.component-wrapper.selected {
-  border-color: #409eff;
-  border-style: solid;
-  background: #ecf5ff;
-}
-
-.component-placeholder {
-  padding: 20px;
-  background: #f5f7fa;
-  border-radius: 4px;
-  text-align: center;
-  color: #606266;
+.device-screen::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
 }
 </style>

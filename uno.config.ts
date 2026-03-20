@@ -40,7 +40,7 @@ export default defineConfig({
   },
   // 安全列表：确保动态使用的图标类名被生成
   safelist: [
-    // 组件配置中使用的图标
+    // 基础组件图标
     'i-tabler-txt',
     'i-tabler-photo',
     'i-tabler-click',
@@ -58,6 +58,32 @@ export default defineConfig({
     'i-tabler-clock',
     'i-tabler-speakerphone',
     'i-tabler-volume',
+    'i-tabler-grid-dots',
+    'i-tabler-list',
+    'i-tabler-badge',
+    'i-tabler-stairs',
+    'i-tabler-check',
+    'i-tabler-square-plus',
+    'i-tabler-minus',
+    'i-tabler-plus',
+    'i-tabler-star',
+    'i-tabler-star-filled',
+    'i-tabler-layout-navbar',
+    'i-tabler-arrow-left',
+    'i-tabler-chevron-right',
+    'i-tabler-chevron-down',
+    'i-tabler-layout-bottombar',
+    'i-tabler-layout-collage',
+    'i-tabler-inbox',
+    'i-tabler-message-circle',
+    'i-tabler-layout-bottombar-expand',
+    'i-tabler-layout-navbar-expand',
+    // ActionBar 和 Tabbar 组件图标
+    'i-tabler-home',
+    'i-tabler-category',
+    'i-tabler-shopping-cart',
+    'i-tabler-user',
+    'i-tabler-heart',
     // 分类图标
     'i-tabler-layout-grid',
     'i-tabler-layout',

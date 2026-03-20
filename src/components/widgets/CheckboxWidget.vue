@@ -3,6 +3,7 @@
  * 复选框组件 Widget
  */
 import { ref } from 'vue'
+import { CheckboxGroup as VanCheckboxGroup, Checkbox as VanCheckbox } from 'vant'
 
 interface Props {
   options?: Array<{ label: string; value: string | number }>
@@ -26,64 +27,17 @@ const selectedValues = ref(props.value)
 </script>
 
 <template>
-  <div class="checkbox-widget" :class="`checkbox-${direction}`">
-    <label
+  <VanCheckboxGroup v-model="selectedValues" :direction="direction">
+    <VanCheckbox
       v-for="option in options"
       :key="option.value"
-      class="checkbox-item"
-      :class="{ 'checkbox-disabled': disabled }"
+      :name="option.value"
+      :disabled="disabled"
     >
-      <input
-        v-model="selectedValues"
-        type="checkbox"
-        :value="option.value"
-        :disabled="disabled"
-        class="checkbox-input"
-      >
-      <span class="checkbox-label">{{ option.label }}</span>
-    </label>
-  </div>
+      {{ option.label }}
+    </VanCheckbox>
+  </VanCheckboxGroup>
 </template>
 
 <style scoped>
-.checkbox-widget {
-  display: flex;
-  gap: 16px;
-}
-
-.checkbox-horizontal {
-  flex-direction: row;
-}
-
-.checkbox-vertical {
-  flex-direction: column;
-}
-
-.checkbox-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.checkbox-disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.checkbox-input {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-}
-
-.checkbox-disabled .checkbox-input {
-  cursor: not-allowed;
-}
-
-.checkbox-label {
-  font-size: 14px;
-  color: #333;
-}
 </style>

@@ -20,6 +20,20 @@ import SpacerWidget from '@/components/widgets/SpacerWidget.vue'
 import SwiperWidget from '@/components/widgets/SwiperWidget.vue'
 import CountdownWidget from '@/components/widgets/CountdownWidget.vue'
 import NoticeWidget from '@/components/widgets/NoticeWidget.vue'
+import GridWidget from '@/components/widgets/GridWidget.vue'
+import CellWidget from '@/components/widgets/CellWidget.vue'
+import BadgeWidget from '@/components/widgets/BadgeWidget.vue'
+import StepsWidget from '@/components/widgets/StepsWidget.vue'
+import StepperWidget from '@/components/widgets/StepperWidget.vue'
+import RateWidget from '@/components/widgets/RateWidget.vue'
+import NavBarWidget from '@/components/widgets/NavBarWidget.vue'
+import TabWidget from '@/components/widgets/TabWidget.vue'
+import CollapseWidget from '@/components/widgets/CollapseWidget.vue'
+import EmptyWidget from '@/components/widgets/EmptyWidget.vue'
+import SkeletonWidget from '@/components/widgets/SkeletonWidget.vue'
+import PopoverWidget from '@/components/widgets/PopoverWidget.vue'
+import ActionBarWidget from '@/components/widgets/ActionBarWidget.vue'
+import TabbarWidget from '@/components/widgets/TabbarWidget.vue'
 
 // 组件注册表
 export const componentRegistry: ComponentRegistry = {
@@ -721,7 +735,7 @@ export const componentRegistry: ComponentRegistry = {
     name: '轮播图',
     type: 'swiper',
     icon: 'i-tabler-carousel-horizontal',
-    category: ComponentCategory.Marketing,
+    category: ComponentCategory.Display,
     component: SwiperWidget,
     defaultProps: {
       images: [
@@ -738,6 +752,16 @@ export const componentRegistry: ComponentRegistry = {
       margin: '0',
     },
     propSchema: [
+      {
+        key: 'images',
+        label: '轮播图片',
+        type: PropType.ImageList,
+        defaultValue: [
+          'https://picsum.photos/seed/slide1/375/200',
+          'https://picsum.photos/seed/slide2/375/200',
+          'https://picsum.photos/seed/slide3/375/200',
+        ],
+      },
       {
         key: 'height',
         label: '轮播图高度',
@@ -771,7 +795,7 @@ export const componentRegistry: ComponentRegistry = {
     name: '倒计时',
     type: 'countdown',
     icon: 'i-tabler-clock',
-    category: ComponentCategory.Marketing,
+    category: ComponentCategory.Display,
     component: CountdownWidget,
     defaultProps: {
       endTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
@@ -813,7 +837,7 @@ export const componentRegistry: ComponentRegistry = {
     name: '公告栏',
     type: 'notice',
     icon: 'i-tabler-speakerphone',
-    category: ComponentCategory.Marketing,
+    category: ComponentCategory.Display,
     component: NoticeWidget,
     defaultProps: {
       text: '这是一条公告信息',
@@ -848,6 +872,811 @@ export const componentRegistry: ComponentRegistry = {
       {
         key: 'scrollable',
         label: '滚动播放',
+        type: PropType.Switch,
+        defaultValue: true,
+      },
+    ],
+  },
+
+  // 新增组件
+  grid: {
+    name: '宫格',
+    type: 'grid',
+    icon: 'i-tabler-grid-dots',
+    category: ComponentCategory.Navigation,
+    component: GridWidget,
+    defaultProps: {
+      columnNum: 4,
+      iconSize: '28px',
+      gutter: 0,
+      square: false,
+      center: true,
+      border: true,
+      clickable: true,
+    },
+    defaultStyles: {
+      margin: '0',
+    },
+    propSchema: [
+      {
+        key: 'columnNum',
+        label: '列数',
+        type: PropType.Number,
+        defaultValue: 4,
+        min: 2,
+        max: 6,
+      },
+      {
+        key: 'iconSize',
+        label: '图标大小',
+        type: PropType.Text,
+        defaultValue: '28px',
+      },
+      {
+        key: 'gutter',
+        label: '格子间距',
+        type: PropType.Number,
+        defaultValue: 0,
+        min: 0,
+        max: 20,
+      },
+      {
+        key: 'square',
+        label: '正方形格子',
+        type: PropType.Switch,
+        defaultValue: false,
+      },
+      {
+        key: 'center',
+        label: '内容居中',
+        type: PropType.Switch,
+        defaultValue: true,
+      },
+      {
+        key: 'border',
+        label: '显示边框',
+        type: PropType.Switch,
+        defaultValue: true,
+      },
+    ],
+  },
+
+  cell: {
+    name: '单元格',
+    type: 'cell',
+    icon: 'i-tabler-list',
+    category: ComponentCategory.Basic,
+    component: CellWidget,
+    defaultProps: {
+      title: '单元格',
+      value: '',
+      label: '',
+      icon: '',
+      isLink: false,
+      border: true,
+      center: false,
+      size: 'normal',
+    },
+    defaultStyles: {
+      margin: '0',
+    },
+    propSchema: [
+      {
+        key: 'title',
+        label: '标题',
+        type: PropType.Text,
+        defaultValue: '单元格',
+      },
+      {
+        key: 'value',
+        label: '右侧内容',
+        type: PropType.Text,
+        defaultValue: '',
+      },
+      {
+        key: 'label',
+        label: '描述信息',
+        type: PropType.Text,
+        defaultValue: '',
+      },
+      {
+        key: 'isLink',
+        label: '显示箭头',
+        type: PropType.Switch,
+        defaultValue: false,
+      },
+      {
+        key: 'border',
+        label: '显示边框',
+        type: PropType.Switch,
+        defaultValue: true,
+      },
+      {
+        key: 'center',
+        label: '垂直居中',
+        type: PropType.Switch,
+        defaultValue: false,
+      },
+      {
+        key: 'size',
+        label: '单元格大小',
+        type: PropType.Select,
+        defaultValue: 'normal',
+        options: [
+          { label: '正常', value: 'normal' },
+          { label: '大', value: 'large' },
+        ],
+      },
+    ],
+  },
+
+  badge: {
+    name: '徽标',
+    type: 'badge',
+    icon: 'i-tabler-badge',
+    category: ComponentCategory.Display,
+    component: BadgeWidget,
+    defaultProps: {
+      content: 5,
+      max: 99,
+      dot: false,
+      color: '#ee0a24',
+      position: 'top-right',
+      showZero: true,
+      childContent: '内容',
+      childIcon: '',
+    },
+    defaultStyles: {
+      margin: '8px 16px',
+    },
+    propSchema: [
+      {
+        key: 'content',
+        label: '徽标内容',
+        type: PropType.Text,
+        defaultValue: '5',
+        description: '可以是数字或文字',
+      },
+      {
+        key: 'max',
+        label: '最大值',
+        type: PropType.Number,
+        defaultValue: 99,
+        description: '超过最大值显示为 max+',
+      },
+      {
+        key: 'dot',
+        label: '圆点徽标',
+        type: PropType.Switch,
+        defaultValue: false,
+      },
+      {
+        key: 'color',
+        label: '徽标颜色',
+        type: PropType.Color,
+        defaultValue: '#ee0a24',
+      },
+      {
+        key: 'position',
+        label: '徽标位置',
+        type: PropType.Select,
+        defaultValue: 'top-right',
+        options: [
+          { label: '右上角', value: 'top-right' },
+          { label: '左上角', value: 'top-left' },
+          { label: '右下角', value: 'bottom-right' },
+          { label: '左下角', value: 'bottom-left' },
+        ],
+      },
+      {
+        key: 'childContent',
+        label: '子元素内容',
+        type: PropType.Text,
+        defaultValue: '内容',
+      },
+    ],
+  },
+
+  steps: {
+    name: '步骤条',
+    type: 'steps',
+    icon: 'i-tabler-stairs',
+    category: ComponentCategory.Display,
+    component: StepsWidget,
+    defaultProps: {
+      active: 0,
+      direction: 'horizontal',
+      activeColor: '#07c160',
+      inactiveColor: '#969799',
+      activeIcon: 'i-tabler-check',
+      inactiveIcon: '',
+    },
+    defaultStyles: {
+      margin: '0',
+    },
+    propSchema: [
+      {
+        key: 'active',
+        label: '当前步骤',
+        type: PropType.Number,
+        defaultValue: 0,
+        min: 0,
+        description: '从 0 开始计数',
+      },
+      {
+        key: 'direction',
+        label: '显示方向',
+        type: PropType.Select,
+        defaultValue: 'horizontal',
+        options: [
+          { label: '水平', value: 'horizontal' },
+          { label: '垂直', value: 'vertical' },
+        ],
+      },
+      {
+        key: 'activeColor',
+        label: '激活颜色',
+        type: PropType.Color,
+        defaultValue: '#07c160',
+      },
+      {
+        key: 'inactiveColor',
+        label: '未激活颜色',
+        type: PropType.Color,
+        defaultValue: '#969799',
+      },
+    ],
+  },
+
+  stepper: {
+    name: '步进器',
+    type: 'stepper',
+    icon: 'i-tabler-square-plus',
+    category: ComponentCategory.Form,
+    component: StepperWidget,
+    defaultProps: {
+      modelValue: 1,
+      min: 1,
+      max: 99999,
+      step: 1,
+      disabled: false,
+      disableInput: false,
+      showInput: true,
+      buttonSize: '28px',
+    },
+    defaultStyles: {
+      margin: '8px 16px',
+    },
+    propSchema: [
+      {
+        key: 'modelValue',
+        label: '当前值',
+        type: PropType.Number,
+        defaultValue: 1,
+      },
+      {
+        key: 'min',
+        label: '最小值',
+        type: PropType.Number,
+        defaultValue: 1,
+      },
+      {
+        key: 'max',
+        label: '最大值',
+        type: PropType.Number,
+        defaultValue: 99999,
+      },
+      {
+        key: 'step',
+        label: '步长',
+        type: PropType.Number,
+        defaultValue: 1,
+      },
+      {
+        key: 'showInput',
+        label: '显示输入框',
+        type: PropType.Switch,
+        defaultValue: true,
+      },
+      {
+        key: 'disabled',
+        label: '禁用',
+        type: PropType.Switch,
+        defaultValue: false,
+      },
+    ],
+  },
+
+  rate: {
+    name: '评分',
+    type: 'rate',
+    icon: 'i-tabler-star',
+    category: ComponentCategory.Form,
+    component: RateWidget,
+    defaultProps: {
+      modelValue: 3,
+      count: 5,
+      size: '20px',
+      color: '#ee0a24',
+      voidColor: '#c8c9cc',
+      icon: 'i-tabler-star-filled',
+      voidIcon: 'i-tabler-star',
+      readonly: false,
+      disabled: false,
+      showScore: false,
+    },
+    defaultStyles: {
+      margin: '8px 16px',
+    },
+    propSchema: [
+      {
+        key: 'modelValue',
+        label: '当前分数',
+        type: PropType.Number,
+        defaultValue: 3,
+        min: 0,
+      },
+      {
+        key: 'count',
+        label: '图标总数',
+        type: PropType.Number,
+        defaultValue: 5,
+        min: 1,
+        max: 10,
+      },
+      {
+        key: 'size',
+        label: '图标大小',
+        type: PropType.Text,
+        defaultValue: '20px',
+      },
+      {
+        key: 'color',
+        label: '选中颜色',
+        type: PropType.Color,
+        defaultValue: '#ee0a24',
+      },
+      {
+        key: 'voidColor',
+        label: '未选中颜色',
+        type: PropType.Color,
+        defaultValue: '#c8c9cc',
+      },
+      {
+        key: 'showScore',
+        label: '显示分数',
+        type: PropType.Switch,
+        defaultValue: false,
+      },
+      {
+        key: 'readonly',
+        label: '只读',
+        type: PropType.Switch,
+        defaultValue: false,
+      },
+      {
+        key: 'disabled',
+        label: '禁用',
+        type: PropType.Switch,
+        defaultValue: false,
+      },
+    ],
+  },
+
+  navbar: {
+    name: '导航栏',
+    type: 'navbar',
+    icon: 'i-tabler-layout-navbar',
+    category: ComponentCategory.Navigation,
+    component: NavBarWidget,
+    defaultProps: {
+      title: '标题',
+      leftText: '',
+      rightText: '',
+      leftIcon: 'i-tabler-arrow-left',
+      rightIcon: '',
+      fixed: false,
+      placeholder: false,
+      zIndex: 1,
+      backgroundColor: '#fff',
+      titleColor: '#323233',
+      border: true,
+    },
+    defaultStyles: {
+      margin: '0',
+    },
+    propSchema: [
+      {
+        key: 'title',
+        label: '标题',
+        type: PropType.Text,
+        defaultValue: '标题',
+      },
+      {
+        key: 'leftText',
+        label: '左侧文字',
+        type: PropType.Text,
+        defaultValue: '',
+      },
+      {
+        key: 'rightText',
+        label: '右侧文字',
+        type: PropType.Text,
+        defaultValue: '',
+      },
+      {
+        key: 'backgroundColor',
+        label: '背景颜色',
+        type: PropType.Color,
+        defaultValue: '#fff',
+      },
+      {
+        key: 'titleColor',
+        label: '标题颜色',
+        type: PropType.Color,
+        defaultValue: '#323233',
+      },
+      {
+        key: 'fixed',
+        label: '固定在顶部',
+        type: PropType.Switch,
+        defaultValue: false,
+      },
+      {
+        key: 'border',
+        label: '显示下边框',
+        type: PropType.Switch,
+        defaultValue: true,
+      },
+    ],
+  },
+
+  tab: {
+    name: '标签页',
+    type: 'tab',
+    icon: 'i-tabler-layout-bottombar',
+    category: ComponentCategory.Display,
+    component: TabWidget,
+    defaultProps: {
+      active: 'tab1',
+      color: '#1989fa',
+      type: 'line',
+      duration: 0.3,
+    },
+    defaultStyles: {
+      margin: '0',
+    },
+    propSchema: [
+      {
+        key: 'color',
+        label: '主题色',
+        type: PropType.Color,
+        defaultValue: '#1989fa',
+      },
+      {
+        key: 'type',
+        label: '样式类型',
+        type: PropType.Select,
+        defaultValue: 'line',
+        options: [
+          { label: '线条', value: 'line' },
+          { label: '卡片', value: 'card' },
+        ],
+      },
+    ],
+  },
+
+  collapse: {
+    name: '折叠面板',
+    type: 'collapse',
+    icon: 'i-tabler-layout-collage',
+    category: ComponentCategory.Display,
+    component: CollapseWidget,
+    defaultProps: {
+      accordion: false,
+      border: true,
+      activeNames: [],
+    },
+    defaultStyles: {
+      margin: '0',
+    },
+    propSchema: [
+      {
+        key: 'accordion',
+        label: '手风琴模式',
+        type: PropType.Switch,
+        defaultValue: false,
+        description: '开启后只能展开一个面板',
+      },
+      {
+        key: 'border',
+        label: '显示边框',
+        type: PropType.Switch,
+        defaultValue: true,
+      },
+    ],
+  },
+
+  empty: {
+    name: '空状态',
+    type: 'empty',
+    icon: 'i-tabler-inbox',
+    category: ComponentCategory.Display,
+    component: EmptyWidget,
+    defaultProps: {
+      image: '',
+      imageSize: '160px',
+      description: '暂无数据',
+      icon: 'i-tabler-inbox',
+    },
+    defaultStyles: {
+      margin: '0',
+    },
+    propSchema: [
+      {
+        key: 'description',
+        label: '描述文字',
+        type: PropType.Text,
+        defaultValue: '暂无数据',
+      },
+      {
+        key: 'image',
+        label: '自定义图片',
+        type: PropType.Image,
+        defaultValue: '',
+        description: '留空则显示默认图标',
+      },
+      {
+        key: 'imageSize',
+        label: '图片大小',
+        type: PropType.Text,
+        defaultValue: '160px',
+      },
+    ],
+  },
+
+  skeleton: {
+    name: '骨架屏',
+    type: 'skeleton',
+    icon: 'i-tabler-layout-grid',
+    category: ComponentCategory.Display,
+    component: SkeletonWidget,
+    defaultProps: {
+      row: 3,
+      rowWidth: '100%',
+      title: false,
+      avatar: false,
+      avatarSize: '32px',
+      avatarShape: 'round',
+      loading: true,
+      animate: true,
+    },
+    defaultStyles: {
+      margin: '0',
+    },
+    propSchema: [
+      {
+        key: 'loading',
+        label: '显示骨架屏',
+        type: PropType.Switch,
+        defaultValue: true,
+      },
+      {
+        key: 'row',
+        label: '段落行数',
+        type: PropType.Number,
+        defaultValue: 3,
+        min: 0,
+        max: 10,
+      },
+      {
+        key: 'title',
+        label: '显示标题',
+        type: PropType.Switch,
+        defaultValue: false,
+      },
+      {
+        key: 'avatar',
+        label: '显示头像',
+        type: PropType.Switch,
+        defaultValue: false,
+      },
+      {
+        key: 'avatarSize',
+        label: '头像大小',
+        type: PropType.Text,
+        defaultValue: '32px',
+      },
+      {
+        key: 'avatarShape',
+        label: '头像形状',
+        type: PropType.Select,
+        defaultValue: 'round',
+        options: [
+          { label: '圆形', value: 'round' },
+          { label: '方形', value: 'square' },
+        ],
+      },
+      {
+        key: 'animate',
+        label: '显示动画',
+        type: PropType.Switch,
+        defaultValue: true,
+      },
+    ],
+  },
+
+  popover: {
+    name: '气泡',
+    type: 'popover',
+    icon: 'i-tabler-message-circle',
+    category: ComponentCategory.Display,
+    component: PopoverWidget,
+    defaultProps: {
+      content: '这是一段提示内容',
+      placement: 'bottom',
+      trigger: 'click',
+      theme: 'light',
+      offset: 8,
+      showArrow: true,
+      childText: '点击',
+      childIcon: '',
+    },
+    defaultStyles: {
+      margin: '8px 16px',
+    },
+    propSchema: [
+      {
+        key: 'content',
+        label: '提示内容',
+        type: PropType.Textarea,
+        defaultValue: '这是一段提示内容',
+      },
+      {
+        key: 'placement',
+        label: '弹出位置',
+        type: PropType.Select,
+        defaultValue: 'bottom',
+        options: [
+          { label: '上方', value: 'top' },
+          { label: '下方', value: 'bottom' },
+          { label: '左侧', value: 'left' },
+          { label: '右侧', value: 'right' },
+        ],
+      },
+      {
+        key: 'trigger',
+        label: '触发方式',
+        type: PropType.Select,
+        defaultValue: 'click',
+        options: [
+          { label: '点击', value: 'click' },
+          { label: '悬停', value: 'hover' },
+        ],
+      },
+      {
+        key: 'theme',
+        label: '主题风格',
+        type: PropType.Select,
+        defaultValue: 'light',
+        options: [
+          { label: '浅色', value: 'light' },
+          { label: '深色', value: 'dark' },
+        ],
+      },
+      {
+        key: 'showArrow',
+        label: '显示箭头',
+        type: PropType.Switch,
+        defaultValue: true,
+      },
+      {
+        key: 'childText',
+        label: '触发元素文字',
+        type: PropType.Text,
+        defaultValue: '点击',
+      },
+    ],
+  },
+
+  actionbar: {
+    name: '动作栏',
+    type: 'actionbar',
+    icon: 'i-tabler-layout-bottombar-expand',
+    category: ComponentCategory.Navigation,
+    component: ActionBarWidget,
+    defaultProps: {
+      icons: [
+        { icon: 'i-tabler-shopping-cart', text: '购物车' },
+        { icon: 'i-tabler-heart', text: '收藏' },
+      ],
+      buttons: [
+        { text: '加入购物车', type: 'warning' },
+        { text: '立即购买', type: 'danger' },
+      ],
+      safeAreaInsetBottom: true,
+      placeholder: true,
+    },
+    defaultStyles: {
+      margin: '0',
+    },
+    propSchema: [
+      {
+        key: 'safeAreaInsetBottom',
+        label: '底部安全区适配',
+        type: PropType.Switch,
+        defaultValue: true,
+        description: '开启后会为 iPhone X 等机型留出底部安全距离',
+      },
+      {
+        key: 'placeholder',
+        label: '固定在底部',
+        type: PropType.Switch,
+        defaultValue: true,
+        description: '开启后会固定在页面底部并生成占位元素',
+      },
+    ],
+  },
+
+  tabbar: {
+    name: '标签栏',
+    type: 'tabbar',
+    icon: 'i-tabler-layout-navbar-expand',
+    category: ComponentCategory.Navigation,
+    component: TabbarWidget,
+    defaultProps: {
+      tabs: [
+        { name: 'home', text: '首页', icon: 'i-tabler-home', activeIcon: 'i-tabler-home-filled' },
+        { name: 'category', text: '分类', icon: 'i-tabler-category', activeIcon: 'i-tabler-category-filled' },
+        { name: 'cart', text: '购物车', icon: 'i-tabler-shopping-cart', badge: 5 },
+        { name: 'user', text: '我的', icon: 'i-tabler-user', activeIcon: 'i-tabler-user-filled' },
+      ],
+      active: 'home',
+      fixed: true,
+      placeholder: true,
+      safeAreaInsetBottom: true,
+      activeColor: '#1989fa',
+      inactiveColor: '#7d7e80',
+      border: true,
+    },
+    defaultStyles: {
+      margin: '0',
+    },
+    propSchema: [
+      {
+        key: 'activeColor',
+        label: '选中颜色',
+        type: PropType.Color,
+        defaultValue: '#1989fa',
+      },
+      {
+        key: 'inactiveColor',
+        label: '未选中颜色',
+        type: PropType.Color,
+        defaultValue: '#7d7e80',
+      },
+      {
+        key: 'fixed',
+        label: '固定在底部',
+        type: PropType.Switch,
+        defaultValue: true,
+      },
+      {
+        key: 'placeholder',
+        label: '显示占位',
+        type: PropType.Switch,
+        defaultValue: true,
+        description: '固定在底部时,是否生成占位元素',
+      },
+      {
+        key: 'safeAreaInsetBottom',
+        label: '底部安全区适配',
+        type: PropType.Switch,
+        defaultValue: true,
+      },
+      {
+        key: 'border',
+        label: '显示上边框',
         type: PropType.Switch,
         defaultValue: true,
       },

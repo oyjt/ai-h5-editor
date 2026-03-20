@@ -42,7 +42,8 @@ onMounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #f5f7fa;
+  background: var(--editor-bg-primary);
+  min-width: 1280px;
 }
 
 .editor-main {
