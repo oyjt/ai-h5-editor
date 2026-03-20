@@ -25,9 +25,6 @@ export const useEditorStore = defineStore('editor', () => {
   // 悬停的组件 ID
   const hoveredComponentId = ref<string | null>(null)
 
-  // 编辑模式：edit | preview
-  const mode = ref<'edit' | 'preview'>('edit')
-
   // 计算属性：选中的组件
   const selectedComponent = computed(() => {
     if (!selectedComponentId.value) {
@@ -190,13 +187,6 @@ export const useEditorStore = defineStore('editor', () => {
   }
 
   /**
-   * 切换模式
-   */
-  function toggleMode() {
-    mode.value = mode.value === 'edit' ? 'preview' : 'edit'
-  }
-
-  /**
    * 设置当前页面
    */
   function setCurrentPage(page: PageSchema) {
@@ -257,7 +247,6 @@ export const useEditorStore = defineStore('editor', () => {
     currentPage,
     selectedComponentId,
     hoveredComponentId,
-    mode,
     selectedComponent,
     hoveredComponent,
 
@@ -272,7 +261,6 @@ export const useEditorStore = defineStore('editor', () => {
     updateComponentsOrder,
     selectComponent,
     hoverComponent,
-    toggleMode,
     setCurrentPage,
     clearPage,
     savePage,

@@ -10,6 +10,7 @@ import { useThemeStore } from '@/stores/theme'
 import { ElButton, ElButtonGroup, ElTooltip, ElMessage, ElMessageBox } from 'element-plus'
 import PublishDialog from '@/components/dialogs/PublishDialog.vue'
 import AIGenerateDialog from '@/components/dialogs/AIGenerateDialog.vue'
+import PreviewDialog from '@/components/dialogs/PreviewDialog.vue'
 
 const router = useRouter()
 const editorStore = useEditorStore()
@@ -24,6 +25,9 @@ const showPublishDialog = ref(false)
 
 // AI 生成对话框显示状态
 const showAIGenerateDialog = ref(false)
+
+// 预览对话框显示状态
+const showPreviewDialog = ref(false)
 
 // 撤销
 function handleUndo() {
@@ -43,7 +47,7 @@ function handleRedo() {
 
 // 预览
 function handlePreview() {
-  editorStore.toggleMode()
+  showPreviewDialog.value = true
 }
 
 // 保存
@@ -131,8 +135,8 @@ function handleToggleTheme() {
       </ElButton>
 
       <ElButton @click="handlePreview">
-        <i class="i-tabler-eye" />
-        {{ editorStore.mode === 'edit' ? '预览' : '编辑' }}
+        <i class="i-tabler-device-mobile" />
+        预览
       </ElButton>
 
       <ElButton type="primary" @click="handleSave">
@@ -167,6 +171,9 @@ function handleToggleTheme() {
 
     <!-- AI 生成对话框 -->
     <AIGenerateDialog v-model="showAIGenerateDialog" />
+
+    <!-- 预览对话框 -->
+    <PreviewDialog v-model="showPreviewDialog" />
   </div>
 </template>
 

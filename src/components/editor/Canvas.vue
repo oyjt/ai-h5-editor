@@ -99,8 +99,8 @@ function handleDrop(e: DragEvent) {
         @dragend="handleDragEnd"
       >
         <div class="device-screen">
-          <!-- 灵动岛 -->
-          <div class="dynamic-island" />
+          <!-- iPhone X 刘海 -->
+          <div class="notch" />
 
           <!-- 状态栏 -->
           <div class="status-bar">
@@ -117,7 +117,7 @@ function handleDrop(e: DragEvent) {
           <div class="page-content">
             <PageRenderer
               :schema="editorStore.currentPage"
-              :is-editing="editorStore.mode === 'edit'"
+              :is-editing="true"
               :selected-id="editorStore.selectedComponentId"
               :hovered-id="editorStore.hoveredComponentId"
               @select-component="handleSelectComponent"
@@ -231,34 +231,61 @@ function handleDrop(e: DragEvent) {
   height: 100%;
   background: #fff;
   border-radius: 30px;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   position: relative;
-  /* iOS 风格滚动 */
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
+  display: flex;
+  flex-direction: column;
   /* 玻璃质感 */
   box-shadow:
     inset 0 0 0 1px rgba(0, 0, 0, 0.05),
     inset 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
-/* Dynamic Island - 灵动岛 */
-.dynamic-island {
-  position: sticky;
+/* iPhone X Notch - 刘海 */
+.notch {
+  position: absolute;
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 126px;
-  height: 37px;
+  width: 209px;
+  height: 30px;
   background: #000;
   border-radius: 0 0 20px 20px;
-  z-index: 9999;
+  z-index: 20;
   box-shadow:
-    inset 0 -1px 3px rgba(255, 255, 255, 0.15),
-    0 4px 12px rgba(0, 0, 0, 0.4);
+    inset 0 -1px 3px rgba(255, 255, 255, 0.1),
+    0 3px 10px rgba(0, 0, 0, 0.35);
   pointer-events: none;
-  margin: 0 auto;
+}
+
+/* 刘海内部细节 - 听筒 */
+.notch::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 56px;
+  height: 6px;
+  background: rgba(20, 20, 25, 0.95);
+  border-radius: 3px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* 刘海内部细节 - 前置摄像头 */
+.notch::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 30%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  background: radial-gradient(circle, rgba(30, 40, 60, 0.9) 0%, rgba(10, 15, 25, 0.95) 70%);
+  border-radius: 50%;
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 /* 状态栏 */
@@ -273,14 +300,13 @@ function handleDrop(e: DragEvent) {
   justify-content: space-between;
   padding: 0 24px;
   padding-top: 12px;
-  z-index: 9998;
+  z-index: 19;
   pointer-events: none;
   font-size: 15px;
   font-weight: 600;
   color: #000;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
   background: #fff;
-  margin-top: -37px; /* 补偿灵动岛高度 */
 }
 
 .status-left,
@@ -307,15 +333,19 @@ function handleDrop(e: DragEvent) {
 
 /* 页面内容区域 */
 .page-content {
-  min-height: calc(100% - 54px - 20px); /* 减去状态栏和底部空间 */
-  max-height: calc(100% - 54px - 20px); /* 限制最大高度，防止超出屏幕 */
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
+  /* iOS 风格滚动 */
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }
 
 /* Home 指示条 */
 .home-indicator {
-  position: sticky;
+  position: absolute;
   bottom: 8px;
   left: 50%;
   transform: translateX(-50%);
@@ -323,28 +353,26 @@ function handleDrop(e: DragEvent) {
   height: 5px;
   background: rgba(0, 0, 0, 0.3);
   border-radius: 3px;
-  z-index: 9998;
+  z-index: 19;
   pointer-events: none;
-  margin-top: auto;
 }
 
 /* 自定义滚动条样式 */
-.device-screen::-webkit-scrollbar {
+.page-content::-webkit-scrollbar {
   width: 3px;
 }
 
-.device-screen::-webkit-scrollbar-track {
+.page-content::-webkit-scrollbar-track {
   background: transparent;
-  margin: 54px 0 20px 0; /* 避开状态栏和底部指示条 */
 }
 
-.device-screen::-webkit-scrollbar-thumb {
+.page-content::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.15);
   border-radius: 2px;
   transition: background 0.2s ease;
 }
 
-.device-screen::-webkit-scrollbar-thumb:hover {
+.page-content::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.25);
 }
 </style>
