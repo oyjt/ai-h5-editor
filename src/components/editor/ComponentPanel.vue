@@ -12,7 +12,7 @@ const activeTab = ref<'components' | 'pages' | 'templates'>('components')
 const keyword = ref('')
 
 const basicTypes = ['image', 'swiper', 'text', 'button', 'card', 'divider', 'input', 'countdown', 'notice', 'grid', 'tabbar', 'nav-bar']
-const marketingTypes = ['coupon', 'goodsList', 'marketingForm', 'badge', 'progress', 'steps']
+const marketingTypes = ['coupon', 'flashSale', 'groupBuy', 'lottery', 'goodsList', 'marketingForm', 'badge', 'progress', 'steps']
 
 const allComponents = computed(() => getAllComponents())
 const filteredComponents = computed(() => {
