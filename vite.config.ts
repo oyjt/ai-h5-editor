@@ -1,10 +1,11 @@
+import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import UnoCSS from 'unocss/vite'
-import { fileURLToPath, URL } from 'node:url'
 
-// https://vite.dev/config/
+// 本地开发保持根路径；CI/Pages 构建可通过 VITE_BASE_PATH 指定仓库子路径。
 export default defineConfig({
+  base: process.env.VITE_BASE_PATH || '/',
   plugins: [
     vue(),
     UnoCSS(),
