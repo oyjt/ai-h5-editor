@@ -9,30 +9,22 @@ import { createComponentSchema } from '@/utils/schema-generator'
 const editorStore = useEditorStore()
 const activeRail = ref('components')
 const activeTab = ref<'components' | 'pages' | 'templates'>('components')
-const activeGroup = ref<'basic' | 'marketing' | 'content' | 'layout'>('basic')
 const keyword = ref('')
 
-const basicTypes = ['image', 'swiper', 'text', 'button', 'card', 'input', 'countdown', 'divider', 'notice', 'grid', 'tabbar', 'nav-bar']
-const marketingTypes = ['coupon', 'flashSale', 'groupBuy', 'lottery', 'goodsList', 'marketingForm']
-const contentTypes = ['text', 'image', 'button', 'card', 'notice', 'badge', 'tag', 'progress']
-const layoutTypes = ['grid', 'divider', 'container', 'spacer', 'tabbar', 'nav-bar', 'actionbar']
+const basicTypes = ['image', 'swiper', 'text', 'button', 'card', 'coupon', 'marketingForm', 'countdown', 'lottery', 'notice', 'grid', 'tabbar', 'nav-bar', 'divider', 'input']
+const marketingTypes = ['groupBuy', 'flashSale', 'goodsList', 'coupon', 'marketingForm', 'lottery']
 
 const allComponents = computed(() => getAllComponents())
 const filteredComponents = computed(() => {
   const q = keyword.value.trim().toLowerCase()
-  return q ? allComponents.value.filter(item => item.name.toLowerCase().includes(q) || item.type.toLowerCase().includes(q)) : allComponents.value
+  if (!q) return allComponents.value
+  return allComponents.value.filter(item => item.name.toLowerCase().includes(q) || item.type.toLowerCase().includes(q))
 })
-
 function pick(types: string[]) {
   return types.map(type => filteredComponents.value.find(item => item.type === type)).filter(Boolean) as any[]
 }
-
-const currentComponents = computed(() => {
-  if (activeGroup.value === 'marketing') return pick(marketingTypes)
-  if (activeGroup.value === 'content') return pick(contentTypes)
-  if (activeGroup.value === 'layout') return pick(layoutTypes)
-  return pick(basicTypes)
-})
+const basicComponents = computed(() => pick(basicTypes))
+const marketingComponents = computed(() => pick(marketingTypes))
 
 function handleAddComponent(type: string) {
   const config = getAllComponents().find(item => item.type === type)
@@ -40,7 +32,6 @@ function handleAddComponent(type: string) {
   editorStore.addComponent(createComponentSchema(type, { ...config.defaultProps }, { ...config.defaultStyles }))
   ElMessage.success(`已添加 ${config.name}`)
 }
-
 function handleClone(original: any) {
   const config = getAllComponents().find(item => item.type === original.type)
   return config ? createComponentSchema(original.type, { ...config.defaultProps }, { ...config.defaultStyles }) : null
@@ -55,13 +46,13 @@ function chooseRail(value: string) {
 
 <template>
   <aside class="left-workspace">
-    <div class="left-rail">
+    <nav class="left-rail">
       <button :class="{ active: activeRail === 'components' }" @click="chooseRail('components')"><i class="i-tabler-layout-grid" /><span>组件</span></button>
       <button :class="{ active: activeRail === 'pages' }" @click="chooseRail('pages')"><i class="i-tabler-file-text" /><span>页面</span></button>
       <button :class="{ active: activeRail === 'assets' }" @click="activeRail = 'assets'"><i class="i-tabler-photo" /><span>素材</span></button>
       <button :class="{ active: activeRail === 'icons' }" @click="activeRail = 'icons'"><i class="i-tabler-icons" /><span>图标</span></button>
       <button class="rail-bottom"><i class="i-tabler-user-circle" /><span>我的</span></button>
-    </div>
+    </nav>
 
     <div class="library-panel">
       <div class="panel-tabs">
@@ -73,31 +64,27 @@ function chooseRail(value: string) {
 
       <template v-if="activeTab === 'components'">
         <label class="search-box"><i class="i-tabler-search" /><input v-model="keyword" placeholder="搜索组件名称" /></label>
-        <div class="group-tabs">
-          <button :class="{ active: activeGroup === 'basic' }" @click="activeGroup = 'basic'">基础组件</button>
-          <button :class="{ active: activeGroup === 'marketing' }" @click="activeGroup = 'marketing'">营销组件</button>
-          <button :class="{ active: activeGroup === 'content' }" @click="activeGroup = 'content'">内容组件</button>
-          <button :class="{ active: activeGroup === 'layout' }" @click="activeGroup = 'layout'">布局组件</button>
-        </div>
-
         <div class="library-scroll">
-          <section class="component-section">
-            <div class="section-title">
-              <strong>{{ activeGroup === 'marketing' ? '营销组件' : activeGroup === 'content' ? '内容组件' : activeGroup === 'layout' ? '布局组件' : '基础组件' }}</strong>
-              <span v-if="activeGroup === 'marketing'">更多 <i class="i-tabler-chevron-right" /></span>
-              <i v-else class="i-tabler-chevron-up" />
-            </div>
-            <VueDraggable :model-value="currentComponents" :group="{ name: 'components', pull: 'clone', put: false }" :clone="handleClone" :sort="false" item-key="type" class="component-grid">
-              <button v-for="comp in currentComponents" :key="comp.type" class="component-card" :class="{ marketing: activeGroup === 'marketing' }" @click="handleAddComponent(comp.type)">
-                <span class="component-icon"><i :class="comp.icon" /></span>
-                <span class="component-name">{{ comp.name }}</span>
-                <em v-if="['flashSale','groupBuy','lottery'].includes(comp.type)">HOT</em>
+          <section class="component-section first">
+            <div class="section-title"><strong>基础组件</strong><i class="i-tabler-chevron-down" /></div>
+            <VueDraggable :model-value="basicComponents" :group="{ name: 'components', pull: 'clone', put: false }" :clone="handleClone" :sort="false" item-key="type" class="component-grid">
+              <button v-for="comp in basicComponents" :key="`basic-${comp.type}`" class="component-card" @click="handleAddComponent(comp.type)">
+                <span class="component-icon"><i :class="comp.icon" /></span><span>{{ comp.name }}</span>
+              </button>
+            </VueDraggable>
+          </section>
+
+          <section class="component-section marketing-section">
+            <div class="section-title"><strong>营销组件</strong><button class="more">更多 <i class="i-tabler-chevron-right" /></button></div>
+            <VueDraggable :model-value="marketingComponents" :group="{ name: 'components', pull: 'clone', put: false }" :clone="handleClone" :sort="false" item-key="type" class="component-grid marketing-grid">
+              <button v-for="comp in marketingComponents" :key="`marketing-${comp.type}`" class="component-card marketing" @click="handleAddComponent(comp.type)">
+                <span class="component-icon"><i :class="comp.icon" /></span><span>{{ comp.name }}</span>
               </button>
             </VueDraggable>
           </section>
 
           <section class="page-tree-section">
-            <div class="section-title"><strong>页面结构</strong><button><i class="i-tabler-plus" /></button></div>
+            <div class="section-title"><strong>页面结构</strong><button class="tree-add"><i class="i-tabler-plus" /></button></div>
             <div class="tree-root"><i class="i-tabler-chevron-down" /><i class="i-tabler-file" /><span>页面：首页</span></div>
             <div class="tree-children">
               <button v-for="component in editorStore.currentPage.components" :key="component.id" :class="{ active: editorStore.selectedComponentId === component.id }" @click="editorStore.selectComponent(component.id)">
@@ -108,13 +95,12 @@ function chooseRail(value: string) {
         </div>
       </template>
 
-      <div v-else-if="activeTab === 'pages'" class="empty-tab"><i class="i-tabler-files" /><strong>页面管理</strong><p>管理活动页、详情页与表单页</p><button>+ 新增页面</button></div>
+      <div v-else-if="activeTab === 'pages'" class="empty-tab"><i class="i-tabler-files" /><strong>页面管理</strong><p>当前项目包含 1 个营销页面</p><button>+ 新增页面</button></div>
       <div v-else class="empty-tab"><i class="i-tabler-template" /><strong>营销模板</strong><p>从高转化模板快速开始</p><button>浏览模板中心</button></div>
     </div>
   </aside>
 </template>
 
 <style scoped>
-.left-workspace{width:392px;min-width:392px;height:100%;display:flex;background:#fff;border-right:1px solid #e8eef5}.left-rail{width:66px;border-right:1px solid #edf1f6;display:flex;flex-direction:column;align-items:stretch;padding:10px 7px;gap:4px;background:#f9fbfd}.left-rail button{height:60px;border:0;border-radius:9px;background:transparent;color:#7c8ca0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:10px;cursor:pointer;position:relative}.left-rail button i{font-size:20px}.left-rail button:hover{color:#1769ff;background:#f2f6ff}.left-rail button.active{color:#1769ff;background:#edf4ff}.left-rail button.active::before{content:'';position:absolute;left:-7px;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0;background:#1769ff}.left-rail .rail-bottom{margin-top:auto}.library-panel{width:326px;min-width:0;display:flex;flex-direction:column;overflow:hidden}.panel-tabs{height:52px;padding:0 16px;border-bottom:1px solid #edf1f6;display:flex;gap:27px;align-items:flex-end;position:relative}.panel-tabs button{height:52px;border:0;border-bottom:2px solid transparent;background:transparent;color:#506177;font-size:13px;cursor:pointer}.panel-tabs button.active{color:#1769ff;border-bottom-color:#1769ff;font-weight:700}.panel-fold{position:absolute;right:15px;top:19px;color:#8d9bad;font-size:12px}.search-box{margin:13px 14px 8px;height:38px;display:flex;align-items:center;gap:7px;padding:0 11px;border:1px solid #eef2f6;border-radius:8px;background:#f8fafc;color:#9ba8b8}.search-box input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:#34465b;font-size:11px}.group-tabs{display:grid;grid-template-columns:repeat(4,1fr);padding:0 14px;border-bottom:1px solid #f0f3f7}.group-tabs button{height:35px;border:0;border-bottom:2px solid transparent;background:transparent;color:#7b899b;font-size:10px;cursor:pointer}.group-tabs button.active{color:#1769ff;border-bottom-color:#1769ff;font-weight:650}.library-scroll{flex:1;overflow:auto;padding:0 13px 20px}.component-section{padding-top:12px}.section-title{height:28px;display:flex;align-items:center;justify-content:space-between;color:#8391a3;font-size:11px}.section-title strong{color:#24354a;font-size:12px}.section-title span{font-size:10px;color:#8b99aa;display:flex;align-items:center}.section-title button{border:0;background:transparent;color:#68798f;cursor:pointer}.component-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px}.component-card{height:68px;border:1px solid #eef2f6;border-radius:8px;background:#fafcff;color:#526277;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:grab;transition:.18s ease;position:relative}.component-card:hover{border-color:#a8c6ff;background:#f5f9ff;box-shadow:0 5px 14px rgba(54,87,132,.07);transform:translateY(-1px)}.component-icon{width:27px;height:27px;border-radius:6px;display:grid;place-items:center;background:#eef4ff;color:#3c7bf7;font-size:17px}.component-card.marketing .component-icon{background:#fff1f0;color:#ff6464}.component-name{font-size:10px}.component-card em{position:absolute;right:-1px;top:-1px;padding:1px 4px;border-radius:0 8px 0 6px;background:#ff5d5d;color:#fff;font-style:normal;font-size:7px}.page-tree-section{margin-top:14px;padding-top:11px;border-top:1px solid #edf1f5}.tree-root{height:30px;display:flex;align-items:center;gap:5px;padding:0 7px;border-radius:5px;background:#eaf3ff;color:#1769ff;font-size:11px}.tree-children{margin-left:13px;padding:5px 0 0 11px;border-left:1px solid #dce5f0;display:flex;flex-direction:column}.tree-children button{height:25px;border:0;background:transparent;color:#6e7e91;text-align:left;display:flex;align-items:center;gap:6px;font-size:10px;cursor:pointer;border-radius:5px;padding:0 6px}.tree-children button:hover,.tree-children button.active{color:#1769ff;background:#f1f6ff}.tree-children button i{font-size:11px}.empty-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#8d9bad;padding:30px}.empty-tab i{font-size:38px;color:#83b3fb;margin-bottom:12px}.empty-tab strong{color:#304157;font-size:14px}.empty-tab p{font-size:11px;margin:7px 0 15px}.empty-tab button{border:1px solid #9ec0ff;background:#f7faff;color:#1769ff;border-radius:7px;padding:8px 12px;cursor:pointer}
-@media(max-width:1440px){.left-workspace{width:360px;min-width:360px}.library-panel{width:294px}.component-grid{grid-template-columns:repeat(3,1fr)}}
+.left-workspace{width:392px;min-width:392px;height:100%;display:flex;background:#fff;border-right:1px solid #e7edf4}.left-rail{width:68px;border-right:1px solid #edf1f6;display:flex;flex-direction:column;padding:10px 7px 12px;gap:5px;background:#f8fafc}.left-rail button{height:58px;border:0;border-radius:9px;background:transparent;color:#8492a6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10px;cursor:pointer;position:relative}.left-rail button i{font-size:20px}.left-rail button.active{color:#1769ff;background:#eaf2ff}.left-rail button.active::before{content:'';position:absolute;left:-7px;top:8px;bottom:8px;width:3px;background:#1769ff;border-radius:0 3px 3px 0}.left-rail button:hover{color:#1769ff}.left-rail .rail-bottom{margin-top:auto}.library-panel{width:324px;min-width:0;display:flex;flex-direction:column;overflow:hidden}.panel-tabs{height:54px;padding:0 20px;border-bottom:1px solid #edf1f6;display:flex;gap:28px;align-items:flex-end;position:relative}.panel-tabs button{height:54px;border:0;border-bottom:2px solid transparent;background:transparent;color:#55657a;font-size:13px;cursor:pointer}.panel-tabs button.active{color:#1769ff;border-bottom-color:#1769ff;font-weight:700}.panel-fold{position:absolute;right:18px;top:20px;color:#8190a4;font-size:12px}.search-box{margin:14px 16px 7px;height:38px;display:flex;align-items:center;gap:7px;padding:0 11px;border-radius:8px;background:#f5f7fa;color:#9aa7b7}.search-box input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:#34465b;font-size:11px}.library-scroll{flex:1;overflow:auto;padding:0 15px 22px;scrollbar-width:thin}.component-section{padding-top:12px}.component-section.first{padding-top:8px}.section-title{height:28px;display:flex;align-items:center;justify-content:space-between;color:#8391a3;font-size:11px}.section-title strong{color:#23364d;font-size:12px}.section-title button{border:0;background:transparent;color:#8996a7;cursor:pointer}.more{font-size:10px;display:flex;align-items:center;gap:1px}.component-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px}.component-card{height:68px;border:1px solid #edf1f6;border-radius:7px;background:#f9fbfd;color:#526277;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:grab;transition:.16s ease}.component-card:hover{border-color:#9fc0ff;background:#f4f8ff;box-shadow:0 4px 12px rgba(45,79,122,.06)}.component-icon{width:27px;height:27px;border-radius:6px;display:grid;place-items:center;background:#eaf2ff;color:#3b7af7;font-size:17px}.component-card>span:last-child{font-size:10px}.component-card.marketing .component-icon{background:#fff0ef;color:#ff6363}.marketing-section{padding-top:14px}.page-tree-section{margin-top:14px;padding-top:10px;border-top:1px solid #edf1f5}.tree-add{font-size:16px!important;color:#526479!important}.tree-root{height:30px;display:flex;align-items:center;gap:5px;padding:0 7px;border-radius:4px;background:#dfeeff;color:#1769ff;font-size:11px}.tree-children{margin-left:15px;padding:4px 0 0 10px;border-left:1px solid #dce5f0;display:flex;flex-direction:column}.tree-children button{height:24px;border:0;background:transparent;color:#6f7e91;text-align:left;display:flex;align-items:center;gap:6px;font-size:10px;cursor:pointer;border-radius:4px;padding:0 6px}.tree-children button.active,.tree-children button:hover{color:#1769ff;background:#f0f6ff}.empty-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#8d9bad;padding:30px}.empty-tab i{font-size:38px;color:#83b3fb;margin-bottom:12px}.empty-tab strong{color:#304157;font-size:14px}.empty-tab p{font-size:11px;margin:7px 0 15px}.empty-tab button{border:1px solid #9ec0ff;background:#f7faff;color:#1769ff;border-radius:7px;padding:8px 12px;cursor:pointer}@media(max-width:1440px){.left-workspace{width:360px;min-width:360px}.library-panel{width:292px}.component-card{height:64px}.component-grid{gap:7px}}
 </style>
