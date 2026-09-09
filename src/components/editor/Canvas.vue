@@ -3,13 +3,17 @@ import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useEditorStore } from '@/stores/editor'
 import PageRenderer from '@/components/renderer/PageRenderer.vue'
-import { getAllComponents } from '@/config/components'
+import { getAllComponents } from '@/config/component-registry'
 import { createComponentSchema } from '@/utils/schema-generator'
 
 const editorStore = useEditorStore()
 const isDragOver = ref(false)
 const isDragging = ref(false)
 const hasComponents = computed(() => editorStore.currentPage.components.length > 0)
+const asset = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`
+const heroUrl = asset('marketing/summer-hero.svg')
+const sunscreenUrl = asset('marketing/product-sunscreen.svg')
+const headphonesUrl = asset('marketing/product-headphones.svg')
 
 function handleSelectComponent(id: string) { editorStore.selectComponent(id) }
 function handleHoverComponent(id: string | null) { editorStore.hoverComponent(id) }
@@ -57,7 +61,7 @@ function handleDrop(e: DragEvent) {
 
             <div v-if="!hasComponents" class="marketing-demo">
               <div class="hero-block selected-demo">
-                <img src="/marketing/summer-hero.svg" alt="夏日焕新季" />
+                <img :src="heroUrl" alt="夏日焕新季" />
                 <div class="selection-toolbar"><button><i class="i-tabler-copy" /></button><button><i class="i-tabler-trash" /></button><button><i class="i-tabler-dots" /></button></div>
                 <i v-for="n in 8" :key="n" class="resize-dot" :class="`dot-${n}`" />
                 <span class="slide-index">1/3</span>
@@ -73,8 +77,8 @@ function handleDrop(e: DragEvent) {
               <section class="recommend-section">
                 <div class="section-heading"><strong>· 热门推荐 ·</strong><span>更多 ›</span></div>
                 <div class="product-grid">
-                  <article><img src="/marketing/product-sunscreen.svg" alt="防晒霜" /><p>安热沙防晒霜 SPF50+</p><div><strong>¥159</strong><del>¥199</del><i class="i-tabler-shopping-cart" /></div></article>
-                  <article><img src="/marketing/product-headphones.svg" alt="蓝牙耳机" /><p>新品蓝牙耳机 轻盈舒适</p><div><strong>¥299</strong><del>¥399</del><i class="i-tabler-shopping-cart" /></div></article>
+                  <article><img :src="sunscreenUrl" alt="防晒霜" /><p>安热沙防晒霜 SPF50+</p><div><strong>¥159</strong><del>¥199</del><i class="i-tabler-shopping-cart" /></div></article>
+                  <article><img :src="headphonesUrl" alt="蓝牙耳机" /><p>新品蓝牙耳机 轻盈舒适</p><div><strong>¥299</strong><del>¥399</del><i class="i-tabler-shopping-cart" /></div></article>
                 </div>
               </section>
 
@@ -104,7 +108,7 @@ function handleDrop(e: DragEvent) {
       </div>
 
       <aside class="page-strip">
-        <div class="page-thumb active"><div class="thumb-preview"><img src="/marketing/summer-hero.svg" /><span /><span /></div><strong>页面 1</strong></div>
+        <div class="page-thumb active"><div class="thumb-preview"><img :src="heroUrl" alt="页面缩略图" /><span /><span /></div><strong>页面 1</strong></div>
         <button class="add-page"><i class="i-tabler-plus" /><span>新增页面</span></button>
       </aside>
     </div>
