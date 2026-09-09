@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import { ElMessage } from 'element-plus'
-import { getAllComponents } from '@/config/components'
+import { getAllComponents } from '@/config/component-registry'
 import { useEditorStore } from '@/stores/editor'
 import { createComponentSchema } from '@/utils/schema-generator'
 
@@ -12,7 +12,7 @@ const activeTab = ref<'components' | 'pages' | 'templates'>('components')
 const keyword = ref('')
 
 const basicTypes = ['image', 'swiper', 'text', 'button', 'card', 'divider', 'input', 'countdown', 'notice', 'grid', 'tabbar', 'nav-bar']
-const marketingTypes = ['badge', 'progress', 'steps', 'action-bar', 'tag', 'popover']
+const marketingTypes = ['coupon', 'goodsList', 'marketingForm', 'badge', 'progress', 'steps']
 
 const allComponents = computed(() => getAllComponents())
 const filteredComponents = computed(() => {
