@@ -1,10 +1,12 @@
 import type { ComponentRegistry, ComponentCategory } from '@/types/component'
 import { componentRegistry as baseComponentRegistry } from './components'
 import { marketingComponentRegistry } from './marketing-components'
+import { extraComponentRegistry } from './extra-components'
 
 export const componentRegistry: ComponentRegistry = {
   ...baseComponentRegistry,
   ...marketingComponentRegistry,
+  ...extraComponentRegistry,
 }
 
 export function getComponentConfig(type: string) {
