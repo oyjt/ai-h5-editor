@@ -9,7 +9,7 @@ import { createComponentSchema } from '@/utils/schema-generator'
 const editorStore = useEditorStore()
 const isDragOver = ref(false)
 const asset = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`
-const heroUrl = asset('marketing/summer-hero.svg')
+const heroUrl = asset('marketing/summer-hero.jpg')
 const selectedComponent = computed(() => editorStore.selectedComponent)
 const previewStyle = computed(() => {
   const scale = editorStore.canvasZoom / 100
