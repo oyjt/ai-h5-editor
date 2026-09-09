@@ -53,5 +53,5 @@ function handleChange(name: string | number) { currentActive.value = name as str
 </template>
 
 <style scoped>
-.tabbar-widget{position:relative;background:#fff}:deep(.van-tabbar){height:48px;background:#fff;box-shadow:0 -4px 14px rgba(39,64,96,.04)}:deep(.van-tabbar-item){font-size:8px}:deep(.van-tabbar-item__icon){margin-bottom:2px;font-size:15px}:deep(.van-tabbar-item__text){line-height:1}:deep(.van-badge){font-size:7px;min-width:12px;height:12px;line-height:12px;padding:0 3px}
+.tabbar-widget{position:sticky;bottom:0;z-index:8;background:#fff;box-shadow:0 -5px 16px rgba(39,64,96,.06)}:deep(.van-tabbar){height:49px;background:rgba(255,255,255,.98);backdrop-filter:blur(8px)}:deep(.van-tabbar::after){border-color:#eef2f6}:deep(.van-tabbar-item){font-size:8px}:deep(.van-tabbar-item__icon){margin-bottom:2px;font-size:15px}:deep(.van-tabbar-item__text){line-height:1}:deep(.van-badge){font-size:7px;min-width:12px;height:12px;line-height:12px;padding:0 3px}
 </style>
