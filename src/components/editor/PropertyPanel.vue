@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
-import { ElButton, ElEmpty, ElTabPane, ElTabs } from 'element-plus'
+import { ElButton, ElTabPane, ElTabs } from 'element-plus'
 import { useEditorStore } from '@/stores/editor'
-import { getComponentConfig } from '@/config/components'
+import { getComponentConfig } from '@/config/component-registry'
 import PropsPanel from './panels/PropsPanel.vue'
 import StylePanel from './panels/StylePanel.vue'
 import AnimationPanel from './panels/AnimationPanel.vue'
@@ -13,6 +13,7 @@ const editorStore = useEditorStore()
 const activeTab = ref('content')
 const selectedComponent = computed(() => editorStore.selectedComponent)
 const componentConfig = computed(() => selectedComponent.value ? getComponentConfig(selectedComponent.value.type) : null)
+const marketingHeroUrl = `${import.meta.env.BASE_URL}marketing/summer-hero.svg`
 
 const debouncedUpdateProp = useDebounceFn((key: string, value: any) => {
   if (selectedComponent.value) editorStore.updateComponentProps(selectedComponent.value.id, { [key]: value })
@@ -50,7 +51,7 @@ watch(selectedComponent, async (next, prev) => {
           <div v-else class="demo-property">
             <section>
               <div class="section-caption"><strong>图片设置</strong><i class="i-tabler-chevron-up" /></div>
-              <div class="asset-row"><img src="/marketing/summer-hero.svg" /><div><strong>夏日活动主视觉.svg</strong><span>750 × 420 · SVG</span><div class="asset-actions"><button>更换图片</button><button>裁剪</button></div></div></div>
+              <div class="asset-row"><img :src="marketingHeroUrl" alt="夏日活动主视觉" /><div><strong>夏日活动主视觉.svg</strong><span>750 × 420 · SVG</span><div class="asset-actions"><button>更换图片</button><button>裁剪</button></div></div></div>
             </section>
             <section>
               <div class="section-caption"><strong>链接设置</strong><i class="i-tabler-chevron-up" /></div>
