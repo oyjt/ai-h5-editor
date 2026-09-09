@@ -28,10 +28,7 @@ withDefaults(defineProps<Props>(), {
 
 <template>
   <section class="goods-widget">
-    <div class="goods-heading">
-      <strong>· {{ title }} ·</strong>
-      <span>更多 ›</span>
-    </div>
+    <div class="goods-heading"><strong>· {{ title }} ·</strong><span>更多 <i class="i-tabler-chevron-right" /></span></div>
     <div class="goods-grid">
       <article class="goods-card">
         <img v-if="productOneImage" :src="productOneImage" :alt="productOneName">
@@ -50,18 +47,5 @@ withDefaults(defineProps<Props>(), {
 </template>
 
 <style scoped>
-.goods-widget { padding: 12px; background:#fff; }
-.goods-heading { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; color:#24314d; }
-.goods-heading strong { font-size:14px; }
-.goods-heading span { font-size:10px; color:#9aa4b4; }
-.goods-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-.goods-card { min-width:0; border-radius:12px; overflow:hidden; background:#fff; box-shadow:0 6px 20px rgba(54,78,118,.08); border:1px solid #eef2f8; }
-.goods-card img,.image-placeholder { width:100%; height:108px; object-fit:cover; display:grid; place-items:center; }
-.image-placeholder { background:linear-gradient(145deg,#daf0ff,#f6fbff); color:#6398c8; font-size:38px; }
-.image-placeholder.second { background:linear-gradient(145deg,#ffe6ef,#fff7fa); color:#d887aa; }
-.goods-card h4 { margin:8px 8px 6px; font-size:11px; line-height:1.35; font-weight:500; color:#38445b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.price-row { display:flex; align-items:center; gap:4px; padding:0 8px 9px; }
-.price-row strong { font-size:13px; }
-.price-row del { font-size:9px; color:#b4bdc9; }
-.price-row i { margin-left:auto; width:20px; height:20px; border-radius:50%; display:grid; place-items:center; background:#fff1f2; color:#ff7580; font-size:11px; }
+.goods-widget{padding:5px 10px 4px;background:#fff}.goods-heading{height:32px;display:flex;align-items:center;justify-content:center;position:relative;color:#24314d}.goods-heading strong{font-size:12px;letter-spacing:.3px}.goods-heading span{position:absolute;right:0;display:flex;align-items:center;color:#9aa6b5;font-size:9px}.goods-heading i{font-size:10px}.goods-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.goods-card{min-width:0;border-radius:9px;overflow:hidden;background:#fff;box-shadow:0 4px 13px rgba(54,78,118,.06);border:1px solid #edf1f5}.goods-card img,.image-placeholder{width:100%;height:94px;object-fit:cover;display:grid;place-items:center;background:#f5f8fb}.image-placeholder{background:linear-gradient(145deg,#daf0ff,#f6fbff);color:#6398c8;font-size:34px}.image-placeholder.second{background:linear-gradient(145deg,#ffe6ef,#fff7fa);color:#d887aa}.goods-card h4{margin:6px 7px 4px;font-size:9px;line-height:1.35;font-weight:500;color:#3c485b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.price-row{display:flex;align-items:center;gap:3px;padding:0 7px 7px}.price-row strong{font-size:12px}.price-row del{font-size:8px;color:#b4bdc9}.price-row i{margin-left:auto;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:#fff1f2;color:#ff7580;font-size:10px}
 </style>
