@@ -5,15 +5,14 @@ import ComponentPanel from '@/components/editor/ComponentPanel.vue'
 import Canvas from '@/components/editor/Canvas.vue'
 import PropertyPanel from '@/components/editor/PropertyPanel.vue'
 import { useEditorStore } from '@/stores/editor'
+import { createMarketingDemoPage } from '@/config/demo-page'
 
 const editorStore = useEditorStore()
 
 onMounted(() => {
   const restored = editorStore.loadPage()
   if (!restored) {
-    editorStore.currentPage.name = '夏日焕新 · 营销活动页'
-    editorStore.currentPage.meta.title = '夏日焕新 · 营销活动页'
-    editorStore.currentPage.meta.description = '夏日焕新营销活动可视化搭建示例'
+    editorStore.setCurrentPage(createMarketingDemoPage())
   }
 })
 </script>
