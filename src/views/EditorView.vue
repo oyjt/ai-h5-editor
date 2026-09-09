@@ -8,7 +8,7 @@ import { useEditorStore } from '@/stores/editor'
 import { createMarketingDemoPage } from '@/config/demo-page'
 
 const editorStore = useEditorStore()
-const DEMO_VERSION = '2026-09-09-high-fidelity-v4'
+const DEMO_VERSION = '2026-09-09-high-fidelity-v5-assets'
 const DEMO_VERSION_KEY = 'h5-editor-demo-version'
 
 function selectHero() {
