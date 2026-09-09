@@ -20,9 +20,11 @@ export function createMarketingDemoPage(): PageSchema {
   const page = createEmptyPageSchema('夏日焕新 · 营销活动页')
 
   page.meta = {
-    ...page.meta,
     title: '夏日焕新 · 营销活动页',
     description: '夏日焕新营销活动可视化搭建示例',
+    keywords: ['夏日焕新', '营销活动', 'H5'],
+    createTime: page.meta?.createTime ?? Date.now(),
+    updateTime: Date.now(),
   }
   page.globalStyles = {
     backgroundColor: '#ffffff',
