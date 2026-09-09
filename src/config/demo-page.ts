@@ -19,8 +19,11 @@ function createFromRegistry(type: string, props: Record<string, unknown> = {}, s
 export function createMarketingDemoPage(): PageSchema {
   const page = createEmptyPageSchema('夏日焕新 · 营销活动页')
 
-  page.meta.title = '夏日焕新 · 营销活动页'
-  page.meta.description = '夏日焕新营销活动可视化搭建示例'
+  page.meta = {
+    ...page.meta,
+    title: '夏日焕新 · 营销活动页',
+    description: '夏日焕新营销活动可视化搭建示例',
+  }
   page.globalStyles = {
     backgroundColor: '#ffffff',
   }
