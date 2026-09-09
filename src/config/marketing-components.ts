@@ -27,8 +27,8 @@ export const marketingComponentRegistry: ComponentRegistry = {
   goodsList: {
     name: '商品列表', type: 'goodsList', icon: 'i-tabler-shopping-bag', category: ComponentCategory.Business, component: GoodsListWidget,
     defaultProps: {
-      title: '热门推荐', productOneName: '安热沙防晒霜 SPF50+', productOnePrice: '159', productOneOriginalPrice: '199', productOneImage: asset('marketing/product-sunscreen.svg'),
-      productTwoName: '新品蓝牙耳机 轻盈舒适', productTwoPrice: '299', productTwoOriginalPrice: '399', productTwoImage: asset('marketing/product-headphones.svg'), accentColor: '#ff4d4f',
+      title: '热门推荐', productOneName: '安热沙防晒霜 SPF50+', productOnePrice: '159', productOneOriginalPrice: '199', productOneImage: asset('marketing/product-sunscreen.png'),
+      productTwoName: '新品蓝牙耳机 轻盈舒适', productTwoPrice: '299', productTwoOriginalPrice: '399', productTwoImage: asset('marketing/product-headphones.png'), accentColor: '#ff4d4f',
     },
     defaultStyles: { margin: '0' },
     propSchema: [
@@ -36,11 +36,11 @@ export const marketingComponentRegistry: ComponentRegistry = {
       { key: 'productOneName', label: '商品 1 名称', type: PropType.Text, defaultValue: '安热沙防晒霜 SPF50+' },
       { key: 'productOnePrice', label: '商品 1 价格', type: PropType.Text, defaultValue: '159' },
       { key: 'productOneOriginalPrice', label: '商品 1 原价', type: PropType.Text, defaultValue: '199' },
-      { key: 'productOneImage', label: '商品 1 图片', type: PropType.Image, defaultValue: asset('marketing/product-sunscreen.svg') },
+      { key: 'productOneImage', label: '商品 1 图片', type: PropType.Image, defaultValue: asset('marketing/product-sunscreen.png') },
       { key: 'productTwoName', label: '商品 2 名称', type: PropType.Text, defaultValue: '新品蓝牙耳机 轻盈舒适' },
       { key: 'productTwoPrice', label: '商品 2 价格', type: PropType.Text, defaultValue: '299' },
       { key: 'productTwoOriginalPrice', label: '商品 2 原价', type: PropType.Text, defaultValue: '399' },
-      { key: 'productTwoImage', label: '商品 2 图片', type: PropType.Image, defaultValue: asset('marketing/product-headphones.svg') },
+      { key: 'productTwoImage', label: '商品 2 图片', type: PropType.Image, defaultValue: asset('marketing/product-headphones.png') },
       { key: 'accentColor', label: '价格强调色', type: PropType.Color, defaultValue: '#ff4d4f' },
     ],
   },
