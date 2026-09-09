@@ -8,22 +8,18 @@ import { createComponentSchema } from '@/utils/schema-generator'
 
 const editorStore = useEditorStore()
 const isDragOver = ref(false)
-const isDragging = ref(false)
-const hasComponents = computed(() => editorStore.currentPage.components.length > 0)
 const asset = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`
 const heroUrl = asset('marketing/summer-hero.svg')
-const sunscreenUrl = asset('marketing/product-sunscreen.svg')
-const headphonesUrl = asset('marketing/product-headphones.svg')
+const selectedComponent = computed(() => editorStore.selectedComponent)
 
 function handleSelectComponent(id: string) { editorStore.selectComponent(id) }
 function handleHoverComponent(id: string | null) { editorStore.hoverComponent(id) }
 function handleUpdateOrder(components: any[]) { editorStore.updateComponentsOrder(components) }
-function handleDragStart() { isDragging.value = true }
 function handleDragOver(e: DragEvent) { e.preventDefault(); isDragOver.value = true; if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy' }
 function handleDragLeave() { isDragOver.value = false }
-function handleDragEnd() { isDragging.value = false; isDragOver.value = false }
 function handleDrop(e: DragEvent) {
-  e.preventDefault(); isDragOver.value = false
+  e.preventDefault()
+  isDragOver.value = false
   const componentType = e.dataTransfer?.getData('componentType')
   if (!componentType) return
   const config = getAllComponents().find(item => item.type === componentType)
@@ -31,68 +27,62 @@ function handleDrop(e: DragEvent) {
   editorStore.addComponent(createComponentSchema(componentType, { ...config.defaultProps }, { ...config.defaultStyles }))
   ElMessage.success(`已添加 ${config.name}`)
 }
+
+function handleMoveUp() {
+  if (!selectedComponent.value) return
+  editorStore.moveComponentUp(selectedComponent.value.id)
+}
+function handleMoveDown() {
+  if (!selectedComponent.value) return
+  editorStore.moveComponentDown(selectedComponent.value.id)
+}
+function handleDuplicate() {
+  const current = selectedComponent.value
+  if (!current) return
+  const clone = createComponentSchema(current.type, { ...current.props }, { ...current.styles })
+  clone.events = current.events ? { ...current.events } : undefined
+  editorStore.addComponent(clone)
+  ElMessage.success('已复制组件')
+}
+function handleDelete() {
+  if (!selectedComponent.value) return
+  editorStore.deleteComponent(selectedComponent.value.id)
+}
 </script>
 
 <template>
-  <div class="canvas">
-    <div class="ruler ruler-x"><span v-for="n in 12" :key="n">{{ n * 10 }}</span></div>
-    <div class="ruler ruler-y"><span v-for="n in 10" :key="n">{{ n * 10 }}</span></div>
+  <div class="canvas-shell">
+    <div class="ruler ruler-x">
+      <span v-for="n in 13" :key="n">{{ (n - 1) * 100 }}</span>
+    </div>
+    <div class="ruler ruler-y">
+      <span v-for="n in 10" :key="n">{{ (n - 1) * 100 }}</span>
+    </div>
 
-    <div class="canvas-container">
-      <div class="floating-tools">
-        <button><i class="i-tabler-arrow-up" /><span>上移</span></button>
-        <button><i class="i-tabler-arrow-down" /><span>下移</span></button>
-        <button><i class="i-tabler-copy" /><span>复制</span></button>
-        <button><i class="i-tabler-trash" /><span>删除</span></button>
+    <div class="canvas-stage">
+      <div class="device-tools" :class="{ disabled: !selectedComponent }">
+        <button title="上移" @click="handleMoveUp"><i class="i-tabler-arrow-up" /><span>上移</span></button>
+        <button title="下移" @click="handleMoveDown"><i class="i-tabler-arrow-down" /><span>下移</span></button>
+        <button title="复制" @click="handleDuplicate"><i class="i-tabler-copy" /><span>复制</span></button>
+        <button class="danger" title="删除" @click="handleDelete"><i class="i-tabler-trash" /><span>删除</span></button>
       </div>
 
-      <div class="phone-shell">
+      <div class="phone-wrap">
+        <div class="phone-shadow" />
         <div
           class="device-frame"
-          :class="{ 'drag-over': isDragOver, dragging: isDragging }"
-          @dragstart="handleDragStart"
+          :class="{ 'drag-over': isDragOver }"
           @dragover="handleDragOver"
           @dragleave="handleDragLeave"
           @drop="handleDrop"
-          @dragend="handleDragEnd"
         >
           <div class="device-screen">
-            <div class="status-bar"><strong>9:41</strong><span><i class="i-tabler-antenna-bars-5" /><i class="i-tabler-wifi" /><i class="i-tabler-battery-4" /></span></div>
-
-            <div v-if="!hasComponents" class="marketing-demo">
-              <div class="hero-block selected-demo">
-                <img :src="heroUrl" alt="夏日焕新季" />
-                <div class="selection-toolbar"><button><i class="i-tabler-copy" /></button><button><i class="i-tabler-trash" /></button><button><i class="i-tabler-dots" /></button></div>
-                <i v-for="n in 8" :key="n" class="resize-dot" :class="`dot-${n}`" />
-                <span class="slide-index">1/3</span>
-              </div>
-
-              <section class="coupon-card">
-                <div class="coupon"><strong>¥20</strong><span>满199可用</span></div>
-                <div class="coupon"><strong>¥50</strong><span>满300可用</span></div>
-                <div class="coupon"><strong>¥100</strong><span>满500可用</span></div>
-                <button>立即<br>领取</button>
-              </section>
-
-              <section class="recommend-section">
-                <div class="section-heading"><strong>· 热门推荐 ·</strong><span>更多 ›</span></div>
-                <div class="product-grid">
-                  <article><img :src="sunscreenUrl" alt="防晒霜" /><p>安热沙防晒霜 SPF50+</p><div><strong>¥159</strong><del>¥199</del><i class="i-tabler-shopping-cart" /></div></article>
-                  <article><img :src="headphonesUrl" alt="蓝牙耳机" /><p>新品蓝牙耳机 轻盈舒适</p><div><strong>¥299</strong><del>¥399</del><i class="i-tabler-shopping-cart" /></div></article>
-                </div>
-              </section>
-
-              <section class="signup-card">
-                <h3>立即报名 领取专属福利</h3>
-                <p>填写信息，获取活动详情与限时优惠</p>
-                <div class="form-row"><input placeholder="请输入您的姓名" /><input placeholder="请输入手机号" /></div>
-                <button>立即提交</button>
-              </section>
-
-              <nav class="demo-tabbar"><span class="active"><i class="i-tabler-home-filled" />首页</span><span><i class="i-tabler-heart-filled" />活动</span><span><i class="i-tabler-shopping-bag" />好物</span><span><i class="i-tabler-user-filled" />我的</span></nav>
+            <div class="dynamic-island" />
+            <div class="status-bar">
+              <strong>9:41</strong>
+              <span><i class="i-tabler-antenna-bars-5" /><i class="i-tabler-wifi" /><i class="i-tabler-battery-4" /></span>
             </div>
-
-            <div v-else class="page-content">
+            <div class="page-content">
               <PageRenderer
                 :schema="editorStore.currentPage"
                 :is-editing="true"
@@ -108,7 +98,15 @@ function handleDrop(e: DragEvent) {
       </div>
 
       <aside class="page-strip">
-        <div class="page-thumb active"><div class="thumb-preview"><img :src="heroUrl" alt="页面缩略图" /><span /><span /></div><strong>页面 1</strong></div>
+        <div class="page-thumb active">
+          <div class="thumb-preview">
+            <img :src="heroUrl" alt="页面缩略图">
+            <div class="thumb-coupons"><i /><i /><i /></div>
+            <div class="thumb-cards"><i /><i /></div>
+            <div class="thumb-form" />
+          </div>
+          <strong>页面 1</strong>
+        </div>
         <button class="add-page"><i class="i-tabler-plus" /><span>新增页面</span></button>
       </aside>
     </div>
@@ -116,33 +114,24 @@ function handleDrop(e: DragEvent) {
 </template>
 
 <style scoped>
-.canvas { flex:1; min-width:0; height:100%; position:relative; overflow:hidden; background:#f6f9fd; background-image:radial-gradient(circle,rgba(94,123,165,.16) 1px,transparent 1px); background-size:20px 20px; }
-[data-theme='dark'] .canvas { background-color:#20242b; }
-.ruler { position:absolute; z-index:5; color:#a8b2c0; font-size:9px; pointer-events:none; }
-.ruler-x { left:0; right:0; top:0; height:24px; border-bottom:1px solid rgba(148,163,184,.18); display:flex; justify-content:space-around; align-items:center; }
-.ruler-y { left:0; top:24px; bottom:0; width:24px; border-right:1px solid rgba(148,163,184,.18); display:flex; flex-direction:column; justify-content:space-around; align-items:center; }
-.canvas-container { position:absolute; inset:24px 0 0 24px; display:flex; align-items:center; justify-content:center; gap:24px; padding:24px 34px; overflow:auto; }
-.phone-shell { position:relative; }
-.device-frame { width:375px; height:760px; border-radius:42px; padding:9px; background:linear-gradient(145deg,#d8dee7,#8f99a7); box-shadow:0 18px 50px rgba(50,77,113,.20),0 0 0 1px rgba(80,93,110,.25); transition:.2s ease; }
-.device-frame.drag-over { box-shadow:0 0 0 4px rgba(23,105,255,.18),0 18px 50px rgba(23,105,255,.24); transform:scale(1.01); }
-.device-frame.dragging { opacity:.82; }
-.device-screen { width:100%; height:100%; overflow:hidden; border-radius:34px; background:#fff; display:flex; flex-direction:column; position:relative; }
-.status-bar { height:36px; min-height:36px; padding:8px 18px 0; display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,.96); color:#17324d; font-size:11px; position:relative; z-index:10; }
-.status-bar span { display:flex; gap:4px; align-items:center; font-size:13px; }
-.page-content { flex:1; min-height:0; overflow:auto; }
-.marketing-demo { flex:1; min-height:0; overflow:auto; background:#fff; color:#263c55; padding-bottom:48px; }
-.marketing-demo::-webkit-scrollbar,.page-content::-webkit-scrollbar { width:3px; }.marketing-demo::-webkit-scrollbar-thumb,.page-content::-webkit-scrollbar-thumb{background:rgba(20,50,80,.18);border-radius:3px}
-.hero-block { margin:0 10px; position:relative; border-radius:12px; overflow:visible; }.hero-block>img{display:block;width:100%;border-radius:12px}
-.selected-demo { outline:2px solid #2684ff; outline-offset:-2px; }
-.selection-toolbar { position:absolute; right:4px; top:-28px; height:28px; display:flex; background:#2684ff; border-radius:6px 6px 0 0; overflow:hidden; }.selection-toolbar button{width:30px;border:0;background:transparent;color:#fff;cursor:pointer}.selection-toolbar button:hover{background:rgba(255,255,255,.16)}
-.resize-dot { width:7px;height:7px;border:2px solid #2684ff;background:#fff;border-radius:50%;position:absolute;z-index:4}.dot-1{left:-4px;top:-4px}.dot-2{left:50%;top:-4px}.dot-3{right:-4px;top:-4px}.dot-4{right:-4px;top:50%}.dot-5{right:-4px;bottom:-4px}.dot-6{left:50%;bottom:-4px}.dot-7{left:-4px;bottom:-4px}.dot-8{left:-4px;top:50%}
-.slide-index { position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.45);color:#fff;border-radius:10px;padding:2px 7px;font-size:10px; }
-.coupon-card { margin:9px 10px; padding:7px; background:linear-gradient(135deg,#ffd7d2,#ffaaa2); border-radius:12px; display:grid; grid-template-columns:repeat(3,1fr) 58px; gap:5px; }.coupon{background:#fff4ea;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;height:57px;border:1px dashed #ff8b7c}.coupon strong{font-size:17px;color:#e94141}.coupon span{font-size:9px;color:#9b6d67}.coupon-card>button{border:0;border-radius:8px;background:linear-gradient(180deg,#ff645f,#ef3e43);color:white;font-size:11px;font-weight:700}
-.recommend-section { padding:2px 10px 0; }.section-heading{display:flex;align-items:center;justify-content:center;position:relative;height:30px}.section-heading strong{font-size:12px;color:#253f63}.section-heading span{position:absolute;right:0;font-size:9px;color:#8b9aae}
-.product-grid { display:grid;grid-template-columns:1fr 1fr;gap:8px; }.product-grid article{border:1px solid #edf0f4;border-radius:10px;overflow:hidden;background:#fff;box-shadow:0 4px 12px rgba(38,67,102,.05)}.product-grid img{width:100%;height:92px;object-fit:cover;display:block}.product-grid p{font-size:9px;padding:6px 7px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.product-grid article>div{display:flex;align-items:center;gap:4px;padding:0 7px 7px}.product-grid strong{color:#ef4444;font-size:12px}.product-grid del{color:#a5afba;font-size:8px}.product-grid i{margin-left:auto;color:#ff8990;font-size:13px}
-.signup-card { margin:10px; padding:12px; border-radius:12px; background:linear-gradient(180deg,#eaf4ff,#f7fbff); text-align:center; }.signup-card h3{font-size:13px;color:#2457a6}.signup-card>p{font-size:9px;color:#7a8ba3;margin:4px 0 9px}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:7px}.form-row input{width:100%;height:31px;border:1px solid #e3ebf5;background:#fff;border-radius:6px;padding:0 8px;font-size:9px;outline:0}.signup-card>button{width:100%;height:34px;border:0;border-radius:18px;background:linear-gradient(90deg,#1677ff,#3b82f6);color:#fff;font-size:11px;margin-top:8px}
-.demo-tabbar { height:46px; position:sticky; bottom:-48px; margin-top:-2px; background:#fff; border-top:1px solid #edf1f5; display:grid;grid-template-columns:repeat(4,1fr);box-shadow:0 -4px 14px rgba(29,58,92,.05)}.demo-tabbar span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:8px;color:#8b99aa}.demo-tabbar i{font-size:14px}.demo-tabbar .active{color:#1677ff}
-.floating-tools { width:48px; border-radius:8px; background:var(--editor-bg-tertiary); box-shadow:0 8px 24px rgba(40,71,110,.12); border:1px solid var(--border-color); overflow:hidden; }.floating-tools button{width:48px;height:48px;border:0;border-bottom:1px solid var(--border-color);background:transparent;color:var(--text-tertiary);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:9px;cursor:pointer}.floating-tools button:last-child{border-bottom:0}.floating-tools button:hover{color:#1769ff;background:rgba(23,105,255,.05)}.floating-tools i{font-size:15px}
-.page-strip { width:82px; align-self:flex-start; margin-top:18px; display:flex;flex-direction:column;gap:12px; }.page-thumb{border:1px solid var(--border-color);background:var(--editor-bg-tertiary);border-radius:8px;padding:6px;text-align:center;color:var(--text-secondary);font-size:10px}.page-thumb.active{border-color:#2684ff;box-shadow:0 0 0 2px rgba(38,132,255,.08)}.thumb-preview{height:104px;background:#fff;border-radius:5px;overflow:hidden;padding:4px}.thumb-preview img{width:100%;height:45px;object-fit:cover;border-radius:3px}.thumb-preview span{display:block;height:20px;margin-top:4px;border-radius:3px;background:#f1f5f9}.page-thumb strong{display:block;margin-top:6px;font-weight:500}.add-page{height:76px;border:1px dashed #c7d1df;background:var(--editor-bg-tertiary);border-radius:8px;color:var(--text-tertiary);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:9px;cursor:pointer}.add-page i{font-size:19px}
-@media (max-height:900px){.device-frame{height:680px;width:335px}.product-grid img{height:78px}.coupon{height:50px}.signup-card{padding:9px}}
+.canvas-shell{flex:1;min-width:0;height:100%;position:relative;overflow:hidden;background:#f5f8fc;background-image:radial-gradient(circle,rgba(123,145,173,.16) 1px,transparent 1px);background-size:18px 18px}
+[data-theme='dark'] .canvas-shell{background-color:#20242b}
+.ruler{position:absolute;z-index:4;color:#a8b4c4;font-size:9px;pointer-events:none;background:rgba(248,250,253,.82);backdrop-filter:blur(8px)}
+.ruler-x{left:24px;right:0;top:0;height:24px;border-bottom:1px solid #e9eef5;display:flex;justify-content:space-around;align-items:center}
+.ruler-y{left:0;top:24px;bottom:0;width:24px;border-right:1px solid #e9eef5;display:flex;flex-direction:column;justify-content:space-around;align-items:center}
+.canvas-stage{position:absolute;inset:24px 0 0 24px;display:flex;align-items:center;justify-content:center;gap:24px;padding:20px 26px 24px;overflow:auto}
+.phone-wrap{position:relative;display:flex;align-items:center;justify-content:center}
+.phone-shadow{position:absolute;left:50%;bottom:-18px;width:280px;height:34px;transform:translateX(-50%);border-radius:50%;background:rgba(65,84,110,.12);filter:blur(16px)}
+.device-frame{width:350px;height:742px;border-radius:44px;padding:8px;background:linear-gradient(145deg,#f6f8fb 0%,#aeb8c4 46%,#eef2f7 100%);box-shadow:0 18px 44px rgba(54,75,103,.19),0 0 0 1px rgba(108,120,136,.35),inset 0 0 0 1px rgba(255,255,255,.8);transition:.2s ease;position:relative}
+.device-frame::before,.device-frame::after{content:'';position:absolute;left:-3px;width:3px;border-radius:3px;background:#aab4c0}.device-frame::before{top:148px;height:62px}.device-frame::after{top:226px;height:44px}
+.device-frame.drag-over{box-shadow:0 0 0 4px rgba(23,105,255,.16),0 18px 46px rgba(23,105,255,.24);transform:scale(1.008)}
+.device-screen{width:100%;height:100%;overflow:hidden;border-radius:36px;background:#fff;display:flex;flex-direction:column;position:relative;box-shadow:inset 0 0 0 1px rgba(32,48,67,.08)}
+.dynamic-island{position:absolute;left:50%;top:8px;z-index:20;width:108px;height:27px;transform:translateX(-50%);border-radius:18px;background:#0d1117;box-shadow:0 1px 2px rgba(0,0,0,.22)}
+.status-bar{height:38px;min-height:38px;padding:9px 17px 0;display:flex;align-items:center;justify-content:space-between;color:#14263b;font-size:10px;position:relative;z-index:12;background:rgba(255,255,255,.94)}
+.status-bar strong{padding-left:5px}.status-bar span{display:flex;gap:3px;align-items:center;font-size:12px}
+.page-content{flex:1;min-height:0;overflow:auto;background:#fff;padding-bottom:2px}.page-content::-webkit-scrollbar{width:0}
+.device-tools{width:48px;border-radius:8px;background:#fff;box-shadow:0 8px 26px rgba(44,68,100,.12);border:1px solid #e4eaf2;overflow:hidden;align-self:center;transition:.15s ease}.device-tools.disabled{opacity:.42}.device-tools.disabled button{pointer-events:none}.device-tools button{width:48px;height:52px;border:0;border-bottom:1px solid #edf1f6;background:#fff;color:#637287;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:9px;cursor:pointer}.device-tools button:last-child{border-bottom:0}.device-tools button:hover{color:#1769ff;background:#f4f8ff}.device-tools button.danger:hover{color:#ef4444;background:#fff6f6}.device-tools i{font-size:16px}
+.page-strip{width:92px;align-self:flex-start;margin-top:8px;display:flex;flex-direction:column;gap:12px}.page-thumb{border:1px solid #dce5f1;background:#fff;border-radius:8px;padding:6px;text-align:center;color:#64748b;font-size:10px;box-shadow:0 3px 12px rgba(68,91,120,.04)}.page-thumb.active{border-color:#2684ff;box-shadow:0 0 0 2px rgba(38,132,255,.08)}.thumb-preview{height:122px;background:#fff;border-radius:5px;overflow:hidden;padding:3px;border:1px solid #eef2f6}.thumb-preview img{width:100%;height:48px;object-fit:cover;border-radius:3px;display:block}.thumb-coupons,.thumb-cards{display:grid;gap:2px;margin-top:3px}.thumb-coupons{grid-template-columns:repeat(3,1fr)}.thumb-coupons i{height:14px;border-radius:2px;background:#ffe4df}.thumb-cards{grid-template-columns:1fr 1fr}.thumb-cards i{height:27px;border-radius:2px;background:#edf3fa}.thumb-form{height:18px;margin-top:3px;border-radius:2px;background:#e8f2ff}.page-thumb strong{display:block;margin-top:6px;font-weight:500;color:#46566a}.add-page{height:76px;border:1px dashed #c9d4e3;background:rgba(255,255,255,.78);border-radius:8px;color:#8b98a9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:9px;cursor:pointer}.add-page:hover{border-color:#7aaeff;color:#1769ff;background:#f7faff}.add-page i{font-size:20px}
+@media(max-height:900px){.device-frame{width:320px;height:680px}.page-strip{transform:scale(.92);transform-origin:top left}.canvas-stage{gap:18px;padding-top:14px}}
+@media(max-width:1500px){.device-frame{width:326px;height:690px}.page-strip{width:82px}.device-tools{width:44px}.device-tools button{width:44px;height:48px}.canvas-stage{gap:18px;padding-left:18px;padding-right:18px}}
 </style>
