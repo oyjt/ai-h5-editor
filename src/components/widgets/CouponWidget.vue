@@ -22,92 +22,23 @@ const props = withDefaults(defineProps<Props>(), {
 const coupons = computed(() => {
   const amounts = props.amounts.split(',').map(item => item.trim()).filter(Boolean)
   const thresholds = props.thresholds.split(',').map(item => item.trim())
-  return amounts.slice(0, 3).map((amount, index) => ({
-    amount,
-    threshold: thresholds[index] || thresholds[thresholds.length - 1] || '0',
-  }))
+  return amounts.slice(0, 3).map((amount, index) => ({ amount, threshold: thresholds[index] || thresholds[thresholds.length - 1] || '0' }))
 })
 </script>
 
 <template>
-  <section class="coupon-widget" :style="{ backgroundColor }">
-    <div class="coupon-heading">
-      <strong>{{ title }}</strong>
-      <span>限时专享</span>
-    </div>
+  <section class="coupon-widget" :style="{ backgroundColor }" :aria-label="title">
     <div class="coupon-row">
       <div v-for="item in coupons" :key="`${item.amount}-${item.threshold}`" class="coupon-card">
         <strong :style="{ color: accentColor }"><small>¥</small>{{ item.amount }}</strong>
         <span>满{{ item.threshold }}可用</span>
+        <i class="notch notch-left" /><i class="notch notch-right" />
       </div>
-      <button class="coupon-action" :style="{ backgroundColor: accentColor }">{{ buttonText }}</button>
+      <button class="coupon-action" :style="{ backgroundColor: accentColor }"><span>{{ buttonText.slice(0, 2) }}</span><span>{{ buttonText.slice(2) }}</span></button>
     </div>
   </section>
 </template>
 
 <style scoped>
-.coupon-widget {
-  padding: 12px;
-  border-radius: 14px;
-}
-
-.coupon-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  color: #25324b;
-}
-
-.coupon-heading strong {
-  font-size: 14px;
-}
-
-.coupon-heading span {
-  font-size: 10px;
-  color: #a66a62;
-}
-
-.coupon-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr) 62px;
-  gap: 6px;
-}
-
-.coupon-card {
-  min-width: 0;
-  padding: 9px 4px;
-  border-radius: 9px;
-  background: rgba(255, 255, 255, 0.88);
-  text-align: center;
-  box-shadow: inset 0 0 0 1px rgba(255, 117, 117, 0.18);
-}
-
-.coupon-card strong {
-  display: block;
-  font-size: 20px;
-  line-height: 1;
-}
-
-.coupon-card strong small {
-  font-size: 11px;
-  margin-right: 1px;
-}
-
-.coupon-card span {
-  display: block;
-  margin-top: 5px;
-  color: #8f6b68;
-  font-size: 9px;
-  white-space: nowrap;
-}
-
-.coupon-action {
-  border: 0;
-  border-radius: 9px;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 0 6px;
-}
+.coupon-widget{margin:0 10px;padding:7px;border-radius:12px;background:linear-gradient(135deg,#ffd8d2,#ffaaa2)!important;box-shadow:inset 0 0 0 1px rgba(255,126,114,.12)}.coupon-row{display:grid;grid-template-columns:repeat(3,1fr) 57px;gap:5px}.coupon-card{position:relative;min-width:0;height:58px;padding:7px 3px;border-radius:7px;background:#fff7ee;text-align:center;border:1px solid rgba(255,129,116,.34);display:flex;flex-direction:column;align-items:center;justify-content:center}.coupon-card strong{display:block;font-size:18px;line-height:1}.coupon-card strong small{font-size:10px;margin-right:1px}.coupon-card span{display:block;margin-top:5px;color:#9a6a65;font-size:8px;white-space:nowrap}.notch{position:absolute;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;background:#ffc1b8}.notch-left{left:-4px}.notch-right{right:-4px}.coupon-action{border:0;border-radius:8px;color:#fff;font-size:10px;font-weight:700;padding:0 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.35;box-shadow:0 5px 10px rgba(238,62,67,.16)}
 </style>

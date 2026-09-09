@@ -26,24 +26,22 @@ export function createMarketingDemoPage(): PageSchema {
     createTime: page.meta?.createTime ?? Date.now(),
     updateTime: Date.now(),
   }
-  page.globalStyles = {
-    backgroundColor: '#ffffff',
-  }
+  page.globalStyles = { backgroundColor: '#ffffff' }
 
   page.components = [
     createFromRegistry('image', {
       src: asset('marketing/summer-hero.svg'),
       alt: '夏日焕新季',
       width: '100%',
-      height: 'auto',
+      height: '250px',
       objectFit: 'cover',
       borderRadius: '12px',
     }, {
-      margin: '10px 12px 8px',
+      margin: '0 10px 8px',
     }),
-    createFromRegistry('coupon'),
-    createFromRegistry('goodsList'),
-    createFromRegistry('marketingForm'),
+    createFromRegistry('coupon', {}, { margin: '0' }),
+    createFromRegistry('goodsList', {}, { margin: '0' }),
+    createFromRegistry('marketingForm', {}, { margin: '0' }),
     createFromRegistry('tabbar', {
       tabs: [
         { name: 'home', text: '首页', icon: 'i-tabler-home', activeIcon: 'i-tabler-home-filled' },
@@ -57,7 +55,7 @@ export function createMarketingDemoPage(): PageSchema {
       safeAreaInsetBottom: false,
       activeColor: '#1769ff',
       inactiveColor: '#8b99aa',
-    }),
+    }, { margin: '0' }),
   ]
 
   return page
