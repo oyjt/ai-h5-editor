@@ -2,7 +2,6 @@
 import { computed, ref } from 'vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import { ElMessage } from 'element-plus'
-import { ComponentCategory } from '@/types/component'
 import { getAllComponents } from '@/config/components'
 import { useEditorStore } from '@/stores/editor'
 import { createComponentSchema } from '@/utils/schema-generator'
