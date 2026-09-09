@@ -11,32 +11,46 @@ const activeRail = ref('components')
 const activeTab = ref<'components' | 'pages' | 'templates'>('components')
 const keyword = ref('')
 
-const basicTypes = ['image', 'swiper', 'text', 'button', 'card', 'coupon', 'marketingForm', 'countdown', 'lottery', 'notice', 'grid', 'tabbar', 'nav-bar', 'divider', 'input']
+const basicPalette = [
+  { key: 'banner', type: 'image', label: 'Banner', icon: 'i-tabler-photo' },
+  { key: 'swiper', type: 'swiper', label: '轮播', icon: 'i-tabler-carousel-horizontal' },
+  { key: 'image', type: 'image', label: '图片', icon: 'i-tabler-photo' },
+  { key: 'text', type: 'text', label: '文本', icon: 'i-tabler-letter-t' },
+  { key: 'button', type: 'button', label: '按钮', icon: 'i-tabler-minus' },
+  { key: 'goods-card', type: 'card', label: '商品卡片', icon: 'i-tabler-shopping-bag' },
+  { key: 'coupon', type: 'coupon', label: '优惠券', icon: 'i-tabler-ticket' },
+  { key: 'form', type: 'marketingForm', label: '表单', icon: 'i-tabler-forms' },
+  { key: 'countdown', type: 'countdown', label: '倒计时', icon: 'i-tabler-alarm' },
+  { key: 'lottery', type: 'lottery', label: '抽奖', icon: 'i-tabler-rosette-discount-check' },
+  { key: 'popup', type: 'popover', label: '弹窗', icon: 'i-tabler-message' },
+  { key: 'video', type: 'video', label: '视频', icon: 'i-tabler-player-play-filled' },
+  { key: 'nav', type: 'nav-bar', label: '导航栏', icon: 'i-tabler-layout-navbar' },
+  { key: 'divider', type: 'divider', label: '分割线', icon: 'i-tabler-minus' },
+  { key: 'media-list', type: 'cell', label: '图文列表', icon: 'i-tabler-list-details' },
+]
 const marketingTypes = ['groupBuy', 'flashSale', 'goodsList', 'coupon', 'marketingForm', 'lottery']
-
 const allComponents = computed(() => getAllComponents())
-const filteredComponents = computed(() => {
-  const q = keyword.value.trim().toLowerCase()
-  if (!q) return allComponents.value
-  return allComponents.value.filter(item => item.name.toLowerCase().includes(q) || item.type.toLowerCase().includes(q))
-})
-function pick(types: string[]) {
-  return types.map(type => filteredComponents.value.find(item => item.type === type)).filter(Boolean) as any[]
-}
-const basicComponents = computed(() => pick(basicTypes))
-const marketingComponents = computed(() => pick(marketingTypes))
+const normalizedKeyword = computed(() => keyword.value.trim().toLowerCase())
+const basicComponents = computed(() => basicPalette
+  .map(item => ({ ...item, config: allComponents.value.find(comp => comp.type === item.type) }))
+  .filter(item => item.config && (!normalizedKeyword.value || item.label.toLowerCase().includes(normalizedKeyword.value) || item.type.toLowerCase().includes(normalizedKeyword.value))))
+const marketingComponents = computed(() => marketingTypes
+  .map(type => allComponents.value.find(item => item.type === type))
+  .filter(Boolean)
+  .filter(item => !normalizedKeyword.value || item!.name.toLowerCase().includes(normalizedKeyword.value) || item!.type.toLowerCase().includes(normalizedKeyword.value)) as any[])
 
 function handleAddComponent(type: string) {
-  const config = getAllComponents().find(item => item.type === type)
+  const config = allComponents.value.find(item => item.type === type)
   if (!config) return ElMessage.error('组件配置不存在')
   editorStore.addComponent(createComponentSchema(type, { ...config.defaultProps }, { ...config.defaultStyles }))
   ElMessage.success(`已添加 ${config.name}`)
 }
 function handleClone(original: any) {
-  const config = getAllComponents().find(item => item.type === original.type)
-  return config ? createComponentSchema(original.type, { ...config.defaultProps }, { ...config.defaultStyles }) : null
+  const type = original.type || original.config?.type
+  const config = allComponents.value.find(item => item.type === type)
+  return config ? createComponentSchema(type, { ...config.defaultProps }, { ...config.defaultStyles }) : null
 }
-function getComponentName(type: string) { return getAllComponents().find(item => item.type === type)?.name || type }
+function getComponentName(type: string) { return allComponents.value.find(item => item.type === type)?.name || type }
 function chooseRail(value: string) {
   activeRail.value = value
   if (value === 'components') activeTab.value = 'components'
@@ -67,9 +81,9 @@ function chooseRail(value: string) {
         <div class="library-scroll">
           <section class="component-section first">
             <div class="section-title"><strong>基础组件</strong><i class="i-tabler-chevron-down" /></div>
-            <VueDraggable :model-value="basicComponents" :group="{ name: 'components', pull: 'clone', put: false }" :clone="handleClone" :sort="false" item-key="type" class="component-grid">
-              <button v-for="comp in basicComponents" :key="`basic-${comp.type}`" class="component-card" @click="handleAddComponent(comp.type)">
-                <span class="component-icon"><i :class="comp.icon" /></span><span>{{ comp.name }}</span>
+            <VueDraggable :model-value="basicComponents" :group="{ name: 'components', pull: 'clone', put: false }" :clone="handleClone" :sort="false" item-key="key" class="component-grid">
+              <button v-for="item in basicComponents" :key="item.key" class="component-card" @click="handleAddComponent(item.type)">
+                <span class="component-icon"><i :class="item.icon" /></span><span>{{ item.label }}</span>
               </button>
             </VueDraggable>
           </section>
