@@ -11,6 +11,7 @@ const isDragOver = ref(false)
 const asset = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`
 const heroUrl = asset('marketing/summer-hero.svg')
 const selectedComponent = computed(() => editorStore.selectedComponent)
+const previewStyle = computed(() => ({ '--preview-scale': String(editorStore.canvasZoom / 100) }))
 
 function handleSelectComponent(id: string) { editorStore.selectComponent(id) }
 function handleHoverComponent(id: string | null) { editorStore.hoverComponent(id) }
@@ -67,31 +68,33 @@ function handleDelete() {
         <button class="danger" title="删除" @click="handleDelete"><i class="i-tabler-trash" /><span>删除</span></button>
       </div>
 
-      <div class="phone-wrap">
-        <div class="phone-shadow" />
-        <div
-          class="device-frame"
-          :class="{ 'drag-over': isDragOver }"
-          @dragover="handleDragOver"
-          @dragleave="handleDragLeave"
-          @drop="handleDrop"
-        >
-          <div class="device-screen">
-            <div class="dynamic-island" />
-            <div class="status-bar">
-              <strong>9:41</strong>
-              <span><i class="i-tabler-antenna-bars-5" /><i class="i-tabler-wifi" /><i class="i-tabler-battery-4" /></span>
-            </div>
-            <div class="page-content">
-              <PageRenderer
-                :schema="editorStore.currentPage"
-                :is-editing="true"
-                :selected-id="editorStore.selectedComponentId"
-                :hovered-id="editorStore.hoveredComponentId"
-                @select-component="handleSelectComponent"
-                @hover-component="handleHoverComponent"
-                @update-order="handleUpdateOrder"
-              />
+      <div class="preview-viewport" :style="previewStyle" :class="{ tablet: editorStore.deviceMode === 'tablet' }">
+        <div class="phone-wrap">
+          <div class="phone-shadow" />
+          <div
+            class="device-frame"
+            :class="{ 'drag-over': isDragOver, tablet: editorStore.deviceMode === 'tablet' }"
+            @dragover="handleDragOver"
+            @dragleave="handleDragLeave"
+            @drop="handleDrop"
+          >
+            <div class="device-screen">
+              <div class="dynamic-island" :class="{ tablet: editorStore.deviceMode === 'tablet' }" />
+              <div class="status-bar">
+                <strong>9:41</strong>
+                <span><i class="i-tabler-antenna-bars-5" /><i class="i-tabler-wifi" /><i class="i-tabler-battery-4" /></span>
+              </div>
+              <div class="page-content">
+                <PageRenderer
+                  :schema="editorStore.currentPage"
+                  :is-editing="true"
+                  :selected-id="editorStore.selectedComponentId"
+                  :hovered-id="editorStore.hoveredComponentId"
+                  @select-component="handleSelectComponent"
+                  @hover-component="handleHoverComponent"
+                  @update-order="handleUpdateOrder"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -120,18 +123,19 @@ function handleDelete() {
 .ruler-x{left:24px;right:0;top:0;height:24px;border-bottom:1px solid #e9eef5;display:flex;justify-content:space-around;align-items:center}
 .ruler-y{left:0;top:24px;bottom:0;width:24px;border-right:1px solid #e9eef5;display:flex;flex-direction:column;justify-content:space-around;align-items:center}
 .canvas-stage{position:absolute;inset:24px 0 0 24px;display:flex;align-items:center;justify-content:center;gap:24px;padding:20px 26px 24px;overflow:auto}
-.phone-wrap{position:relative;display:flex;align-items:center;justify-content:center}
+.preview-viewport{width:350px;height:742px;display:flex;align-items:center;justify-content:center;transition:width .2s ease,height .2s ease}.preview-viewport.tablet{width:430px;height:720px}
+.phone-wrap{position:relative;display:flex;align-items:center;justify-content:center;transform:scale(var(--preview-scale));transform-origin:center center;transition:transform .18s ease}
 .phone-shadow{position:absolute;left:50%;bottom:-18px;width:280px;height:34px;transform:translateX(-50%);border-radius:50%;background:rgba(65,84,110,.12);filter:blur(16px)}
-.device-frame{width:350px;height:742px;border-radius:44px;padding:8px;background:linear-gradient(145deg,#f6f8fb 0%,#aeb8c4 46%,#eef2f7 100%);box-shadow:0 18px 44px rgba(54,75,103,.19),0 0 0 1px rgba(108,120,136,.35),inset 0 0 0 1px rgba(255,255,255,.8);transition:.2s ease;position:relative}
+.device-frame{width:350px;height:742px;border-radius:44px;padding:8px;background:linear-gradient(145deg,#f6f8fb 0%,#aeb8c4 46%,#eef2f7 100%);box-shadow:0 18px 44px rgba(54,75,103,.19),0 0 0 1px rgba(108,120,136,.35),inset 0 0 0 1px rgba(255,255,255,.8);transition:.2s ease;position:relative}.device-frame.tablet{width:430px;height:720px;border-radius:30px;padding:7px}.device-frame.tablet::before,.device-frame.tablet::after{display:none}
 .device-frame::before,.device-frame::after{content:'';position:absolute;left:-3px;width:3px;border-radius:3px;background:#aab4c0}.device-frame::before{top:148px;height:62px}.device-frame::after{top:226px;height:44px}
 .device-frame.drag-over{box-shadow:0 0 0 4px rgba(23,105,255,.16),0 18px 46px rgba(23,105,255,.24);transform:scale(1.008)}
-.device-screen{width:100%;height:100%;overflow:hidden;border-radius:36px;background:#fff;display:flex;flex-direction:column;position:relative;box-shadow:inset 0 0 0 1px rgba(32,48,67,.08)}
-.dynamic-island{position:absolute;left:50%;top:8px;z-index:20;width:108px;height:27px;transform:translateX(-50%);border-radius:18px;background:#0d1117;box-shadow:0 1px 2px rgba(0,0,0,.22)}
+.device-screen{width:100%;height:100%;overflow:hidden;border-radius:36px;background:#fff;display:flex;flex-direction:column;position:relative;box-shadow:inset 0 0 0 1px rgba(32,48,67,.08)}.device-frame.tablet .device-screen{border-radius:24px}
+.dynamic-island{position:absolute;left:50%;top:8px;z-index:20;width:108px;height:27px;transform:translateX(-50%);border-radius:18px;background:#0d1117;box-shadow:0 1px 2px rgba(0,0,0,.22)}.dynamic-island.tablet{width:7px;height:7px;top:8px;border-radius:50%;background:#374151}
 .status-bar{height:38px;min-height:38px;padding:9px 17px 0;display:flex;align-items:center;justify-content:space-between;color:#14263b;font-size:10px;position:relative;z-index:12;background:rgba(255,255,255,.94)}
 .status-bar strong{padding-left:5px}.status-bar span{display:flex;gap:3px;align-items:center;font-size:12px}
 .page-content{flex:1;min-height:0;overflow:auto;background:#fff;padding-bottom:2px}.page-content::-webkit-scrollbar{width:0}
 .device-tools{width:48px;border-radius:8px;background:#fff;box-shadow:0 8px 26px rgba(44,68,100,.12);border:1px solid #e4eaf2;overflow:hidden;align-self:center;transition:.15s ease}.device-tools.disabled{opacity:.42}.device-tools.disabled button{pointer-events:none}.device-tools button{width:48px;height:52px;border:0;border-bottom:1px solid #edf1f6;background:#fff;color:#637287;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:9px;cursor:pointer}.device-tools button:last-child{border-bottom:0}.device-tools button:hover{color:#1769ff;background:#f4f8ff}.device-tools button.danger:hover{color:#ef4444;background:#fff6f6}.device-tools i{font-size:16px}
 .page-strip{width:92px;align-self:flex-start;margin-top:8px;display:flex;flex-direction:column;gap:12px}.page-thumb{border:1px solid #dce5f1;background:#fff;border-radius:8px;padding:6px;text-align:center;color:#64748b;font-size:10px;box-shadow:0 3px 12px rgba(68,91,120,.04)}.page-thumb.active{border-color:#2684ff;box-shadow:0 0 0 2px rgba(38,132,255,.08)}.thumb-preview{height:122px;background:#fff;border-radius:5px;overflow:hidden;padding:3px;border:1px solid #eef2f6}.thumb-preview img{width:100%;height:48px;object-fit:cover;border-radius:3px;display:block}.thumb-coupons,.thumb-cards{display:grid;gap:2px;margin-top:3px}.thumb-coupons{grid-template-columns:repeat(3,1fr)}.thumb-coupons i{height:14px;border-radius:2px;background:#ffe4df}.thumb-cards{grid-template-columns:1fr 1fr}.thumb-cards i{height:27px;border-radius:2px;background:#edf3fa}.thumb-form{height:18px;margin-top:3px;border-radius:2px;background:#e8f2ff}.page-thumb strong{display:block;margin-top:6px;font-weight:500;color:#46566a}.add-page{height:76px;border:1px dashed #c9d4e3;background:rgba(255,255,255,.78);border-radius:8px;color:#8b98a9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:9px;cursor:pointer}.add-page:hover{border-color:#7aaeff;color:#1769ff;background:#f7faff}.add-page i{font-size:20px}
-@media(max-height:900px){.device-frame{width:320px;height:680px}.page-strip{transform:scale(.92);transform-origin:top left}.canvas-stage{gap:18px;padding-top:14px}}
-@media(max-width:1500px){.device-frame{width:326px;height:690px}.page-strip{width:82px}.device-tools{width:44px}.device-tools button{width:44px;height:48px}.canvas-stage{gap:18px;padding-left:18px;padding-right:18px}}
+@media(max-height:900px){.preview-viewport{width:320px;height:680px}.device-frame{width:320px;height:680px}.preview-viewport.tablet{width:388px;height:650px}.device-frame.tablet{width:388px;height:650px}.page-strip{transform:scale(.92);transform-origin:top left}.canvas-stage{gap:18px;padding-top:14px}}
+@media(max-width:1500px){.preview-viewport{width:326px;height:690px}.device-frame{width:326px;height:690px}.preview-viewport.tablet{width:390px;height:655px}.device-frame.tablet{width:390px;height:655px}.page-strip{width:82px}.device-tools{width:44px}.device-tools button{width:44px;height:48px}.canvas-stage{gap:18px;padding-left:18px;padding-right:18px}}
 </style>
