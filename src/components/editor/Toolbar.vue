@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useDebounceFn } from '@vueuse/core'
 import { useRouter } from 'vue-router'
 import { ElButton, ElMessage, ElMessageBox, ElTooltip } from 'element-plus'
 import { useEditorStore } from '@/stores/editor'
@@ -18,13 +19,49 @@ const showPublishDialog = ref(false)
 const showAIGenerateDialog = ref(false)
 const showPreviewDialog = ref(false)
 const themeIcon = computed(() => themeStore.theme === 'dark' ? 'i-tabler-sun' : 'i-tabler-moon')
+const lastSavedAt = ref(formatTime(new Date()))
+const saving = ref(false)
+
+function formatTime(date: Date) {
+  return date.toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })
+}
+
+function persistPage(showMessage = false) {
+  saving.value = true
+  const success = editorStore.savePage()
+  saving.value = false
+  if (success) {
+    lastSavedAt.value = formatTime(new Date())
+    if (showMessage) ElMessage.success('保存成功')
+  }
+  else if (showMessage) ElMessage.error('保存失败')
+  return success
+}
+
+const autoSave = useDebounceFn(() => persistPage(false), 900)
+
+watch(
+  () => editorStore.currentPage,
+  () => autoSave(),
+  { deep: true },
+)
 
 function handleUndo() { const page = historyStore.undo(); if (page) editorStore.currentPage = page }
 function handleRedo() { const page = historyStore.redo(); if (page) editorStore.currentPage = page }
-function handleSave() {
-  const success = editorStore.savePage()
-  if (success) ElMessage.success('保存成功')
-  else ElMessage.error('保存失败')
+function handleSave() { persistPage(true) }
+async function handleRename() {
+  try {
+    const { value } = await ElMessageBox.prompt('请输入页面名称', '重命名页面', {
+      inputValue: editorStore.currentPage.name || '夏日焕新 · 营销活动页',
+      inputPattern: /\S+/,
+      inputErrorMessage: '页面名称不能为空',
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+    })
+    editorStore.currentPage.name = value.trim()
+    persistPage(false)
+  }
+  catch {}
 }
 function handleClear() {
   ElMessageBox.confirm('确定要清空页面吗？此操作不可恢复。', '提示', { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' })
@@ -63,8 +100,8 @@ function handleClear() {
 
   <div class="workspace-toolbar">
     <div class="page-title-wrap">
-      <div class="page-title">{{ editorStore.currentPage.name || '夏日焕新 · 营销活动页' }} <button><i class="i-tabler-pencil" /></button></div>
-      <div class="autosave"><i class="i-tabler-cloud-check" /> 已自动保存 <span>10:24:36</span></div>
+      <div class="page-title">{{ editorStore.currentPage.name || '夏日焕新 · 营销活动页' }} <button title="重命名" @click="handleRename"><i class="i-tabler-pencil" /></button></div>
+      <div class="autosave" :class="{ saving }"><i :class="saving ? 'i-tabler-loader-2 spin' : 'i-tabler-cloud-check'" /> {{ saving ? '正在保存' : '已自动保存' }} <span>{{ lastSavedAt }}</span></div>
     </div>
 
     <div class="editor-actions">
@@ -95,6 +132,7 @@ function handleClear() {
 
 <style scoped>
 .editor-header{height:62px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;background:#fff;border-bottom:1px solid #edf1f6;position:relative;z-index:60}.brand-area,.user-area,.top-nav,.editor-actions,.page-title-wrap,.history-actions,.device-switch,.zoom-control{display:flex;align-items:center}.brand{border:0;background:transparent;display:flex;align-items:center;cursor:pointer}.brand-mark{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,#2f6dff 0%,#4f9fff 100%);color:#fff;font-size:20px;box-shadow:0 8px 16px rgba(48,108,255,.18)}.brand-copy{display:flex;flex-direction:column;align-items:flex-start;margin-left:10px;min-width:138px}.brand-copy strong{font-size:16px;color:#13233a;line-height:1.18;letter-spacing:.2px}.brand-copy small{font-size:10px;color:#a0aec0;margin-top:3px;letter-spacing:1px}.top-nav{gap:7px;margin-left:22px}.top-nav button{height:34px;padding:0 11px;border:0;background:transparent;color:#506177;border-radius:8px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px}.top-nav button i{font-size:14px}.top-nav button:hover,.top-nav button.active{color:#245ff5;background:#f4f7ff}.user-area{gap:7px}.global-search{width:185px;height:34px;border:1px solid #edf1f6;border-radius:9px;background:#f8fafc;display:flex;align-items:center;gap:7px;padding:0 10px;color:#a5b0bf}.global-search input{border:0;outline:0;background:transparent;width:100%;font-size:11px;color:#56677c}.header-icon{width:32px;height:32px;border:0;background:transparent;color:#607086;border-radius:8px;display:grid;place-items:center;cursor:pointer;font-size:17px;position:relative}.header-icon:hover{background:#f5f8fc;color:#1769ff}.header-icon.danger:hover{color:#ef4444}.notice em{position:absolute;right:6px;top:5px;width:6px;height:6px;border-radius:50%;background:#ff4d4f;border:1px solid white}.avatar{width:31px;height:31px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#d8f0ff,#74b7ff);color:#1769ff;font-size:15px;margin-left:4px}.user-copy{display:flex;flex-direction:column;line-height:1.1}.user-copy strong{color:#26364b;font-size:11px;font-weight:650}.user-copy span{font-size:9px;color:#9aa7b7;margin-top:3px}.user-chevron{color:#8f9bad;font-size:12px}
-.workspace-toolbar{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:#fff;border-bottom:1px solid #e9eef5;position:relative;z-index:55}.page-title-wrap{gap:10px}.page-title{font-size:15px;font-weight:700;color:#17263a;display:flex;align-items:center;gap:7px}.page-title button{width:25px;height:25px;border:0;background:transparent;color:#53657a;display:grid;place-items:center;cursor:pointer}.autosave{margin-left:10px;font-size:10px;color:#a0adbc;display:flex;gap:4px;align-items:center;font-weight:400}.autosave span{margin-left:2px;color:#adb7c4}.editor-actions{gap:10px}.history-actions{gap:2px;margin-right:2px}.history-actions button{width:30px;height:32px;border:0;background:transparent;color:#63758a;border-radius:7px;cursor:pointer;font-size:16px}.history-actions button:hover{background:#f4f7fb;color:#1769ff}.history-actions button:disabled{opacity:.28;cursor:not-allowed}.device-switch{height:36px;border:1px solid #e7edf5;border-radius:8px;background:#f8fafc;overflow:hidden}.device-switch button{width:38px;height:34px;border:0;background:transparent;color:#8a99ab;cursor:pointer;font-size:16px}.device-switch button.active{color:#1769ff;background:#fff;box-shadow:0 2px 7px rgba(53,82,120,.08)}.zoom-control{height:36px;border:1px solid #e7edf5;border-radius:8px;background:#fff;overflow:hidden}.zoom-control button{width:34px;height:34px;border:0;background:transparent;color:#718198;cursor:pointer}.zoom-control button:hover{color:#1769ff;background:#f7faff}.zoom-control span{min-width:56px;text-align:center;color:#26364b;font-size:11px;font-weight:650}.action-button{height:36px;border-radius:8px;min-width:78px;border-color:#dce5f2;color:#34506f}.action-button.preview{color:#1769ff;border-color:#9fc0ff;background:#f8fbff}.publish-button{height:36px;border-radius:8px;min-width:90px;background:#1677ff;border-color:#1677ff;box-shadow:0 7px 16px rgba(23,105,255,.22)}
+.workspace-toolbar{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:#fff;border-bottom:1px solid #e9eef5;position:relative;z-index:55}.page-title-wrap{gap:10px}.page-title{font-size:15px;font-weight:700;color:#17263a;display:flex;align-items:center;gap:7px}.page-title button{width:25px;height:25px;border:0;background:transparent;color:#53657a;display:grid;place-items:center;cursor:pointer}.autosave{margin-left:10px;font-size:10px;color:#a0adbc;display:flex;gap:4px;align-items:center;font-weight:400}.autosave span{margin-left:2px;color:#adb7c4}.autosave.saving{color:#1769ff}.spin{animation:spin .8s linear infinite}.editor-actions{gap:10px}.history-actions{gap:2px;margin-right:2px}.history-actions button{width:30px;height:32px;border:0;background:transparent;color:#63758a;border-radius:7px;cursor:pointer;font-size:16px}.history-actions button:hover{background:#f4f7fb;color:#1769ff}.history-actions button:disabled{opacity:.28;cursor:not-allowed}.device-switch{height:36px;border:1px solid #e7edf5;border-radius:8px;background:#f8fafc;overflow:hidden}.device-switch button{width:38px;height:34px;border:0;background:transparent;color:#8a99ab;cursor:pointer;font-size:16px}.device-switch button.active{color:#1769ff;background:#fff;box-shadow:0 2px 7px rgba(53,82,120,.08)}.zoom-control{height:36px;border:1px solid #e7edf5;border-radius:8px;background:#fff;overflow:hidden}.zoom-control button{width:34px;height:34px;border:0;background:transparent;color:#718198;cursor:pointer}.zoom-control button:hover{color:#1769ff;background:#f7faff}.zoom-control span{min-width:56px;text-align:center;color:#26364b;font-size:11px;font-weight:650}.action-button{height:36px;border-radius:8px;min-width:78px;border-color:#dce5f2;color:#34506f}.action-button.preview{color:#1769ff;border-color:#9fc0ff;background:#f8fbff}.publish-button{height:36px;border-radius:8px;min-width:90px;background:#1677ff;border-color:#1677ff;box-shadow:0 7px 16px rgba(23,105,255,.22)}
+@keyframes spin{to{transform:rotate(360deg)}}
 @media(max-width:1500px){.top-nav button:nth-child(n+4){display:none}.global-search{display:none}.user-copy{display:none}.brand-copy{min-width:120px}.top-nav{margin-left:12px}}
 </style>
