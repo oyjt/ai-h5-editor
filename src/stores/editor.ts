@@ -2,21 +2,33 @@
  * 编辑器状态管理
  */
 
+import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import type { PageSchema, ComponentSchema } from '@/types/schema'
+import type { ComponentSchema, PageSchema } from '@/types/schema'
 import {
+  cloneSchema,
   createEmptyPageSchema,
   findComponentById,
+  moveComponentById,
   removeComponentById,
   updateComponentById,
-  moveComponentById,
-  cloneSchema,
 } from '@/utils/schema-generator'
 import { useHistoryStore } from './history'
 
+const PAGE_STORAGE_KEY = 'h5-editor-page'
+const PROJECT_STORAGE_KEY = 'h5-editor-project'
+
+interface StoredProject {
+  version: 1
+  currentPageIndex: number
+  pages: PageSchema[]
+}
+
 export const useEditorStore = defineStore('editor', () => {
-  const currentPage = ref<PageSchema>(createEmptyPageSchema())
+  const initialPage = createEmptyPageSchema()
+  const currentPage = ref<PageSchema>(initialPage)
+  const pages = ref<PageSchema[]>([initialPage])
+  const currentPageIndex = ref(0)
   const selectedComponentId = ref<string | null>(null)
   const hoveredComponentId = ref<string | null>(null)
   const canvasZoom = ref(100)
@@ -26,11 +38,69 @@ export const useEditorStore = defineStore('editor', () => {
     if (!selectedComponentId.value) return null
     return findComponentById(currentPage.value.components, selectedComponentId.value)
   })
-
   const hoveredComponent = computed(() => {
     if (!hoveredComponentId.value) return null
     return findComponentById(currentPage.value.components, hoveredComponentId.value)
   })
+
+  function syncCurrentPageToProject() {
+    if (!pages.value.length) pages.value = [currentPage.value]
+    pages.value[currentPageIndex.value] = currentPage.value
+  }
+  function resetHistory(page = currentPage.value) {
+    const historyStore = useHistoryStore()
+    historyStore.clear()
+    historyStore.pushHistory(cloneSchema(page))
+  }
+  function activatePage(index: number) {
+    if (index < 0 || index >= pages.value.length) return false
+    syncCurrentPageToProject()
+    currentPageIndex.value = index
+    currentPage.value = pages.value[index]
+    selectedComponentId.value = null
+    hoveredComponentId.value = null
+    resetHistory(currentPage.value)
+    return true
+  }
+
+  function addPage(page?: PageSchema) {
+    syncCurrentPageToProject()
+    const next = page || createEmptyPageSchema(`页面 ${pages.value.length + 1}`)
+    if (!next.globalStyles) next.globalStyles = { backgroundColor: '#ffffff' }
+    pages.value.push(next)
+    activatePage(pages.value.length - 1)
+    savePage()
+    return next
+  }
+  function duplicatePage(index = currentPageIndex.value) {
+    const source = pages.value[index]
+    if (!source) return null
+    const duplicate = cloneSchema(source)
+    duplicate.id = `${source.id}-copy-${Date.now()}`
+    duplicate.name = `${source.name || `页面 ${index + 1}`} 副本`
+    duplicate.meta = { ...duplicate.meta, title: duplicate.name, updateTime: Date.now() }
+    pages.value.splice(index + 1, 0, duplicate)
+    activatePage(index + 1)
+    savePage()
+    return duplicate
+  }
+  function deletePage(index = currentPageIndex.value) {
+    if (pages.value.length <= 1 || !pages.value[index]) return false
+    pages.value.splice(index, 1)
+    const nextIndex = Math.min(index, pages.value.length - 1)
+    currentPageIndex.value = nextIndex
+    currentPage.value = pages.value[nextIndex]
+    selectedComponentId.value = null
+    hoveredComponentId.value = null
+    resetHistory(currentPage.value)
+    savePage()
+    return true
+  }
+  function switchPage(index: number) {
+    const changed = activatePage(index)
+    if (changed) savePage()
+    return changed
+  }
 
   function addComponent(component: ComponentSchema, parentId?: string, index?: number) {
     const historyStore = useHistoryStore()
@@ -44,47 +114,40 @@ export const useEditorStore = defineStore('editor', () => {
     }
     else if (index !== undefined && index >= 0) currentPage.value.components.splice(index, 0, component)
     else currentPage.value.components.push(component)
-
+    syncCurrentPageToProject()
     historyStore.pushHistory(cloneSchema(currentPage.value))
     selectedComponentId.value = component.id
   }
-
   function updateComponentsOrder(components: ComponentSchema[]) {
-    const historyStore = useHistoryStore()
     currentPage.value.components = components
-    historyStore.pushHistory(cloneSchema(currentPage.value))
+    syncCurrentPageToProject()
+    useHistoryStore().pushHistory(cloneSchema(currentPage.value))
   }
-
   function deleteComponent(id: string) {
-    const historyStore = useHistoryStore()
     currentPage.value.components = removeComponentById(currentPage.value.components, id)
-    historyStore.pushHistory(cloneSchema(currentPage.value))
+    syncCurrentPageToProject()
+    useHistoryStore().pushHistory(cloneSchema(currentPage.value))
     if (selectedComponentId.value === id) selectedComponentId.value = null
   }
-
   function moveComponentUp(id: string) {
-    const historyStore = useHistoryStore()
     currentPage.value.components = moveComponentById(currentPage.value.components, id, 'up')
-    historyStore.pushHistory(cloneSchema(currentPage.value))
+    syncCurrentPageToProject()
+    useHistoryStore().pushHistory(cloneSchema(currentPage.value))
   }
-
   function moveComponentDown(id: string) {
-    const historyStore = useHistoryStore()
     currentPage.value.components = moveComponentById(currentPage.value.components, id, 'down')
-    historyStore.pushHistory(cloneSchema(currentPage.value))
+    syncCurrentPageToProject()
+    useHistoryStore().pushHistory(cloneSchema(currentPage.value))
   }
-
   function updateComponent(id: string, updates: Partial<ComponentSchema>) {
-    const historyStore = useHistoryStore()
     currentPage.value.components = updateComponentById(currentPage.value.components, id, updates)
-    historyStore.pushHistory(cloneSchema(currentPage.value))
+    syncCurrentPageToProject()
+    useHistoryStore().pushHistory(cloneSchema(currentPage.value))
   }
-
   function updateComponentProps(id: string, props: Record<string, any>) {
     const component = findComponentById(currentPage.value.components, id)
     if (component) updateComponent(id, { props: { ...component.props, ...props } })
   }
-
   function updateComponentStyles(id: string, styles: Record<string, any>) {
     const component = findComponentById(currentPage.value.components, id)
     if (component) updateComponent(id, { styles: { ...component.styles, ...styles } })
@@ -96,19 +159,29 @@ export const useEditorStore = defineStore('editor', () => {
   function setDeviceMode(value: 'mobile' | 'tablet') { deviceMode.value = value }
 
   function setCurrentPage(page: PageSchema) {
-    const historyStore = useHistoryStore()
     currentPage.value = page
+    pages.value = [page]
+    currentPageIndex.value = 0
     selectedComponentId.value = null
     hoveredComponentId.value = null
-    historyStore.clear()
-    historyStore.pushHistory(cloneSchema(page))
+    resetHistory(page)
   }
-
-  function clearPage() { setCurrentPage(createEmptyPageSchema()) }
+  function clearPage() {
+    const empty = createEmptyPageSchema(currentPage.value.name || `页面 ${currentPageIndex.value + 1}`)
+    empty.globalStyles = { backgroundColor: '#ffffff' }
+    currentPage.value = empty
+    syncCurrentPageToProject()
+    selectedComponentId.value = null
+    hoveredComponentId.value = null
+    resetHistory(empty)
+  }
 
   function savePage() {
     try {
-      localStorage.setItem('h5-editor-page', JSON.stringify(currentPage.value))
+      syncCurrentPageToProject()
+      const project: StoredProject = { version: 1, currentPageIndex: currentPageIndex.value, pages: pages.value }
+      localStorage.setItem(PROJECT_STORAGE_KEY, JSON.stringify(project))
+      localStorage.setItem(PAGE_STORAGE_KEY, JSON.stringify(currentPage.value))
       return true
     }
     catch (error) {
@@ -116,16 +189,26 @@ export const useEditorStore = defineStore('editor', () => {
       return false
     }
   }
-
   function loadPage() {
     try {
-      const saved = localStorage.getItem('h5-editor-page')
-      if (saved) {
-        const page = JSON.parse(saved) as PageSchema
-        setCurrentPage(page)
-        return true
+      const storedProject = localStorage.getItem(PROJECT_STORAGE_KEY)
+      if (storedProject) {
+        const project = JSON.parse(storedProject) as StoredProject
+        if (Array.isArray(project.pages) && project.pages.length) {
+          pages.value = project.pages
+          currentPageIndex.value = Math.min(Math.max(project.currentPageIndex || 0, 0), pages.value.length - 1)
+          currentPage.value = pages.value[currentPageIndex.value]
+          selectedComponentId.value = null
+          hoveredComponentId.value = null
+          resetHistory(currentPage.value)
+          return true
+        }
       }
-      return false
+      const saved = localStorage.getItem(PAGE_STORAGE_KEY)
+      if (!saved) return false
+      const page = JSON.parse(saved) as PageSchema
+      setCurrentPage(page)
+      return true
     }
     catch (error) {
       console.error('加载页面失败:', error)
@@ -135,12 +218,18 @@ export const useEditorStore = defineStore('editor', () => {
 
   return {
     currentPage,
+    pages,
+    currentPageIndex,
     selectedComponentId,
     hoveredComponentId,
     canvasZoom,
     deviceMode,
     selectedComponent,
     hoveredComponent,
+    addPage,
+    duplicatePage,
+    deletePage,
+    switchPage,
     addComponent,
     deleteComponent,
     moveComponentUp,
