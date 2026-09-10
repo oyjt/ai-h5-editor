@@ -1,0 +1,99 @@
+:root {
+  /* Brand */
+  --brand-50:#f3f7ff;
+  --brand-100:#e8f1ff;
+  --brand-200:#cfe0ff;
+  --brand-300:#a8c7ff;
+  --brand-400:#73a8ff;
+  --brand-500:#3e87ff;
+  --brand-600:#1769ff;
+  --brand-700:#1256d8;
+
+  /* Semantic */
+  --success-500:#22a06b;
+  --warning-500:#f5a524;
+  --danger-500:#ef4444;
+
+  /* Surface */
+  --surface-0:#f4f7fb;
+  --surface-1:#ffffff;
+  --surface-2:#f8fafc;
+  --surface-3:#f3f6fa;
+  --fill-soft:#f3f7fc;
+  --fill-hover:#f7faff;
+
+  /* Text */
+  --text-strong:#17263a;
+  --text-primary:#26364b;
+  --text-secondary:#607086;
+  --text-muted:#98a5b5;
+  --text-disabled:#b7c1ce;
+
+  /* Borders */
+  --border-subtle:#e9eef5;
+  --border-default:#dfe7f1;
+  --border-strong:#cbd6e3;
+  --border-brand:#73a8ff;
+
+  /* Radius */
+  --radius-xs:4px;
+  --radius-sm:6px;
+  --radius-md:8px;
+  --radius-lg:10px;
+  --radius-xl:14px;
+  --radius-2xl:18px;
+
+  /* Shadows */
+  --shadow-xs:0 2px 7px rgba(46,65,88,.04);
+  --shadow-sm:0 6px 16px rgba(44,67,96,.08);
+  --shadow-md:0 10px 24px rgba(44,67,96,.12);
+  --shadow-lg:0 18px 40px rgba(38,58,88,.16);
+  --shadow-sidebar:3px 0 12px rgba(44,67,96,.025);
+  --shadow-brand:0 8px 18px rgba(23,105,255,.2);
+
+  /* Typography */
+  --font-family-sans:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',Roboto,Arial,sans-serif;
+  --font-size-xs:10px;
+  --font-size-sm:11px;
+  --font-size-md:12px;
+  --font-size-base:13px;
+  --font-size-lg:16px;
+  --font-size-xl:20px;
+
+  /* Layout */
+  --header-height:72px;
+  --workspace-toolbar-height:72px;
+  --editor-rail-width:68px;
+  --property-panel-width:320px;
+
+  /* Motion */
+  --motion-fast:120ms;
+  --motion-base:160ms;
+  --motion-slow:220ms;
+  --ease-standard:cubic-bezier(.2,0,0,1);
+}
+
+[data-theme='dark'] {
+  --surface-0:#1d222b;
+  --surface-1:#222934;
+  --surface-2:#282f3a;
+  --surface-3:#303845;
+  --fill-soft:#2c3440;
+  --fill-hover:#323c49;
+  --text-strong:#f1f5f9;
+  --text-primary:#e4eaf1;
+  --text-secondary:#b2bdca;
+  --text-muted:#8491a1;
+  --text-disabled:#667281;
+  --border-subtle:#343d49;
+  --border-default:#3b4654;
+  --border-strong:#4a5665;
+  --shadow-xs:0 2px 7px rgba(0,0,0,.16);
+  --shadow-sm:0 6px 16px rgba(0,0,0,.2);
+  --shadow-md:0 10px 24px rgba(0,0,0,.26);
+  --shadow-lg:0 18px 40px rgba(0,0,0,.34);
+}
+
+.ds-interactive {
+  transition:background-color var(--motion-base) var(--ease-standard),border-color var(--motion-base) var(--ease-standard),color var(--motion-base) var(--ease-standard),box-shadow var(--motion-base) var(--ease-standard),transform var(--motion-base) var(--ease-standard);
+}
