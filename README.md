@@ -4,6 +4,14 @@
 
 > 当前产品范围不包含数据分析与团队协作模块。
 
+## 产品导航
+
+工作台、模板中心、我的作品、素材管理统一使用顶部导航：
+
+`工作台 / 模板中心 / 我的作品 / 素材管理`
+
+顶部右侧提供统一搜索、通知和用户信息。平台搜索框采用单一白色 Surface：外层容器负责背景、边框和圆角，内部 input 保持透明，避免双层背景造成视觉割裂。
+
 ## 功能概览
 
 ### 工作台
@@ -31,7 +39,7 @@
 
 ### 素材管理
 
-- 图片、图标、视频素材分类
+- 图片、图标、插画、视频、音频素材分类
 - 搜索素材
 - 上传素材
 - 编辑器内直接复用营销素材
@@ -89,14 +97,14 @@ src/
 │   ├── dialogs/            # 预览 / 发布 / AI 弹层
 │   ├── editor/             # 编辑器主体
 │   │   └── panels/         # 内容 / 样式 / 交互 / 动画面板
-│   ├── platform/           # 平台级导航组件
+│   ├── platform/           # 顶部平台导航
 │   ├── renderer/           # Schema 渲染器
 │   └── widgets/            # H5 组件库
 ├── config/                 # 组件与模板注册
 ├── router/                 # 路由
 ├── stores/                 # Pinia 状态
 ├── styles/
-│   └── design-system.css   # 全局 Design Token
+│   └── design-system.css   # 全局 Design Token / 搜索框规范
 ├── types/                  # Schema / 组件 / 模板类型
 ├── utils/                  # 导出与 Schema 工具
 └── views/
@@ -140,27 +148,10 @@ pnpm build
 pnpm preview
 ```
 
-## 设计与开发约束
+## 设计与 Agent 规范
 
-项目已建立统一设计系统。新增或修改 UI 前必须阅读：
+- `DESIGN.md`：产品信息架构、顶部导航、搜索框、编辑器与交互视觉基线。
+- `AGENTS.md`：AI Agent 和代码助手的开发约束。
+- `src/styles/design-system.css`：运行时代码中的 Design Token 唯一来源。
 
-- [`DESIGN.md`](./DESIGN.md)：产品视觉、布局和交互规范
-- [`AGENTS.md`](./AGENTS.md)：AI / Agent 开发约束
-- [`docs/design-system.md`](./docs/design-system.md)：详细 Design Token 规范
-
-核心原则：
-
-1. 设计稿优先，设计稿未覆盖的复杂页面和交互先补设计再开发。
-2. 新 UI 优先复用 `src/styles/design-system.css` 中的 Token。
-3. 不新增与现有品牌蓝接近但不一致的硬编码色值。
-4. 所有交互控件必须考虑 Hover、Selected、Focus、Disabled、Loading、Empty 与 Error 状态。
-5. 编辑器保持桌面优先，画布缩放不得影响左右面板尺寸。
-6. 当前产品不引入数据分析和团队协作入口。
-
-## CI / Preview
-
-`.github/workflows/preview.yml` 会在 `main` 更新后执行构建，并部署 GitHub Pages 预览。
-
-## License
-
-MIT
+UI 调整优先以最新设计稿和 `DESIGN.md` 为准。复杂交互若设计稿未覆盖，应先补设计，再开发。
