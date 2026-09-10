@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { VueDraggable } from 'vue-draggable-plus'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { getAllComponents } from '@/config/component-registry'
 import { useEditorStore } from '@/stores/editor'
 import { createComponentSchema } from '@/utils/schema-generator'
@@ -74,13 +74,11 @@ function handleAddComponent(type: string) {
   editorStore.addComponent(createComponentSchema(type, { ...config.defaultProps }, { ...config.defaultStyles }))
   ElMessage.success(`已添加 ${config.name}`)
 }
-
 function handleClone(original: any) {
   const type = original.type || original.config?.type
   const config = allComponents.value.find(item => item.type === type)
   return config ? createComponentSchema(type, { ...config.defaultProps }, { ...config.defaultStyles }) : null
 }
-
 function handleAddAsset(item: typeof marketingAssets[number]) {
   const config = allComponents.value.find(component => component.type === 'image')
   if (!config) return
@@ -96,7 +94,6 @@ function handleAddAsset(item: typeof marketingAssets[number]) {
   }, { margin: '8px 10px', textAlign: 'center' }))
   ElMessage.success(`已添加 ${item.name}`)
 }
-
 async function copyIcon(icon: string) {
   try {
     await navigator.clipboard.writeText(icon)
@@ -106,7 +103,25 @@ async function copyIcon(icon: string) {
     ElMessage.info(icon)
   }
 }
-
+function handleAddPage() {
+  editorStore.addPage()
+  ElMessage.success('已新增页面')
+}
+function handleDuplicatePage(index: number, event: Event) {
+  event.stopPropagation()
+  editorStore.duplicatePage(index)
+  ElMessage.success('页面已复制')
+}
+async function handleDeletePage(index: number, event: Event) {
+  event.stopPropagation()
+  if (editorStore.pages.length <= 1) return ElMessage.warning('至少保留一个页面')
+  try {
+    await ElMessageBox.confirm(`确定删除“${editorStore.pages[index]?.name || `页面 ${index + 1}`}”吗？`, '删除页面', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' })
+    editorStore.deletePage(index)
+    ElMessage.success('页面已删除')
+  }
+  catch {}
+}
 function getComponentName(type: string) { return structureNames[type] || allComponents.value.find(item => item.type === type)?.name || type }
 function chooseRail(value: typeof activeRail.value) {
   activeRail.value = value
@@ -140,50 +155,48 @@ function chooseRail(value: typeof activeRail.value) {
             <section class="component-section first">
               <div class="section-title"><strong>基础组件</strong><i class="i-tabler-chevron-down" /></div>
               <VueDraggable :model-value="basicComponents" :group="{ name: 'components', pull: 'clone', put: false }" :clone="handleClone" :sort="false" item-key="key" class="component-grid">
-                <button v-for="item in basicComponents" :key="item.key" class="component-card" @click="handleAddComponent(item.type)">
-                  <span class="component-icon"><i :class="item.icon" /></span><span>{{ item.label }}</span>
-                </button>
+                <button v-for="item in basicComponents" :key="item.key" class="component-card" @click="handleAddComponent(item.type)"><span class="component-icon"><i :class="item.icon" /></span><span>{{ item.label }}</span></button>
               </VueDraggable>
             </section>
-
             <section class="component-section marketing-section">
               <div class="section-title"><strong>营销组件</strong><button class="more">更多 <i class="i-tabler-chevron-right" /></button></div>
               <VueDraggable :model-value="marketingComponents" :group="{ name: 'components', pull: 'clone', put: false }" :clone="handleClone" :sort="false" item-key="key" class="component-grid marketing-grid">
-                <button v-for="item in marketingComponents" :key="item.key" class="component-card marketing" @click="handleAddComponent(item.type)">
-                  <span class="component-icon"><i :class="item.icon" /></span><span>{{ item.label }}</span>
-                </button>
+                <button v-for="item in marketingComponents" :key="item.key" class="component-card marketing" @click="handleAddComponent(item.type)"><span class="component-icon"><i :class="item.icon" /></span><span>{{ item.label }}</span></button>
               </VueDraggable>
             </section>
-
             <section class="page-tree-section">
               <div class="section-title"><strong>页面结构</strong><button class="tree-add"><i class="i-tabler-plus" /></button></div>
-              <div class="tree-root"><i class="i-tabler-chevron-down" /><i class="i-tabler-file" /><span>页面：首页</span></div>
+              <div class="tree-root"><i class="i-tabler-chevron-down" /><i class="i-tabler-file" /><span>页面：{{ editorStore.currentPage.name || `页面 ${editorStore.currentPageIndex + 1}` }}</span></div>
               <div class="tree-children">
-                <button v-for="component in editorStore.currentPage.components" :key="component.id" :class="{ active: editorStore.selectedComponentId === component.id }" @click="editorStore.selectComponent(component.id)">
-                  <i class="i-tabler-square-rounded" /><span>{{ getComponentName(component.type) }}</span>
-                </button>
+                <button v-for="component in editorStore.currentPage.components" :key="component.id" :class="{ active: editorStore.selectedComponentId === component.id }" @click="editorStore.selectComponent(component.id)"><i class="i-tabler-square-rounded" /><span>{{ getComponentName(component.type) }}</span></button>
               </div>
             </section>
           </div>
         </template>
 
-        <div v-else-if="activeTab === 'pages'" class="empty-tab"><i class="i-tabler-files" /><strong>页面管理</strong><p>当前项目包含 1 个营销页面</p><button @click="ElMessage.info('当前设计稿为单页 H5，新增页面将在项目模式提供')">+ 新增页面</button></div>
+        <div v-else-if="activeTab === 'pages'" class="page-manager">
+          <div class="page-manager-head"><div><strong>页面管理</strong><span>{{ editorStore.pages.length }} 个页面</span></div><button @click="handleAddPage"><i class="i-tabler-plus" />新增</button></div>
+          <div class="page-manager-list">
+            <button v-for="(page,index) in editorStore.pages" :key="page.id" class="page-manager-item" :class="{ active: editorStore.currentPageIndex === index }" @click="editorStore.switchPage(index)">
+              <span class="page-index">{{ String(index + 1).padStart(2, '0') }}</span>
+              <span class="page-copy"><strong>{{ page.name || `页面 ${index + 1}` }}</strong><small>{{ page.components.length }} 个组件</small></span>
+              <span class="page-actions"><i class="i-tabler-copy" title="复制页面" @click="handleDuplicatePage(index,$event)" /><i class="i-tabler-trash" title="删除页面" @click="handleDeletePage(index,$event)" /></span>
+            </button>
+          </div>
+        </div>
+
         <div v-else class="empty-tab"><i class="i-tabler-template" /><strong>营销模板</strong><p>从高转化模板快速开始</p><button @click="$router.push('/templates')">浏览模板中心</button></div>
       </template>
 
       <template v-else-if="activeRail === 'assets'">
         <div class="rail-panel-title"><div><strong>素材库</strong><span>项目素材</span></div><i class="i-tabler-upload" /></div>
         <label class="search-box"><i class="i-tabler-search" /><input placeholder="搜索素材" /></label>
-        <div class="asset-library">
-          <button v-for="item in marketingAssets" :key="item.src" @click="handleAddAsset(item)"><img :src="item.src" :alt="item.name"><span>{{ item.name }}</span></button>
-        </div>
+        <div class="asset-library"><button v-for="item in marketingAssets" :key="item.src" @click="handleAddAsset(item)"><img :src="item.src" :alt="item.name"><span>{{ item.name }}</span></button></div>
       </template>
 
       <template v-else-if="activeRail === 'icons'">
         <div class="rail-panel-title"><div><strong>图标库</strong><span>点击复制图标类名</span></div><i class="i-tabler-icons" /></div>
-        <div class="icon-library">
-          <button v-for="icon in iconItems" :key="icon" :title="icon" @click="copyIcon(icon)"><i :class="icon" /></button>
-        </div>
+        <div class="icon-library"><button v-for="icon in iconItems" :key="icon" :title="icon" @click="copyIcon(icon)"><i :class="icon" /></button></div>
       </template>
 
       <div v-else class="empty-tab"><i class="i-tabler-user-circle" /><strong>我的资源</strong><p>收藏的组件、素材与模板将在这里统一管理</p></div>
@@ -192,7 +205,7 @@ function chooseRail(value: typeof activeRail.value) {
 </template>
 
 <style scoped>
-.left-workspace{width:392px;min-width:392px;height:100%;display:flex;background:#fff;border-right:1px solid #e7edf4}.left-rail{width:68px;flex:0 0 68px;border-right:1px solid #edf1f6;display:flex;flex-direction:column;padding:10px 7px 12px;gap:5px;background:#f8fafc}.left-rail button{height:58px;border:0;border-radius:9px;background:transparent;color:#8492a6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10px;cursor:pointer;position:relative}.left-rail button i{font-size:20px}.left-rail button.active{color:#1769ff;background:#eaf2ff}.left-rail button.active::before{content:'';position:absolute;left:-7px;top:8px;bottom:8px;width:3px;background:#1769ff;border-radius:0 3px 3px 0}.left-rail button:hover{color:#1769ff}.left-rail .rail-bottom{margin-top:auto}.library-panel{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}.panel-tabs{height:54px;padding:0 20px;border-bottom:1px solid #edf1f6;display:flex;gap:28px;align-items:flex-end;position:relative}.panel-tabs button{height:54px;border:0;border-bottom:2px solid transparent;background:transparent;color:#55657a;font-size:13px;cursor:pointer}.panel-tabs button.active{color:#1769ff;border-bottom-color:#1769ff;font-weight:700}.panel-fold{position:absolute;right:18px;top:20px;color:#8190a4;font-size:12px}.search-box{margin:14px 16px 7px;height:38px;display:flex;align-items:center;gap:7px;padding:0 11px;border-radius:8px;background:#f5f7fa;color:#9aa7b7}.search-box input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:#34465b;font-size:11px}.library-scroll{flex:1;overflow:auto;padding:0 15px 22px;scrollbar-width:thin}.component-section{padding-top:12px}.component-section.first{padding-top:8px}.section-title{height:28px;display:flex;align-items:center;justify-content:space-between;color:#8391a3;font-size:11px}.section-title strong{color:#23364d;font-size:12px}.section-title button{border:0;background:transparent;color:#8996a7;cursor:pointer}.more{font-size:10px;display:flex;align-items:center;gap:1px}.component-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px}.component-card{height:68px;border:1px solid #edf1f6;border-radius:7px;background:#f9fbfd;color:#526277;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:grab;transition:.16s ease}.component-card:hover{border-color:#9fc0ff;background:#f4f8ff;box-shadow:0 4px 12px rgba(45,79,122,.06)}.component-icon{width:27px;height:27px;border-radius:6px;display:grid;place-items:center;background:#eaf2ff;color:#3b7af7;font-size:17px}.component-card>span:last-child{font-size:10px}.component-card.marketing .component-icon{background:#fff0ef;color:#ff6363}.marketing-section{padding-top:14px}.page-tree-section{margin-top:14px;padding-top:10px;border-top:1px solid #edf1f5}.tree-add{font-size:16px!important;color:#526479!important}.tree-root{height:30px;display:flex;align-items:center;gap:5px;padding:0 7px;border-radius:4px;background:#dfeeff;color:#1769ff;font-size:11px}.tree-children{margin-left:15px;padding:4px 0 0 10px;border-left:1px solid #dce5f0;display:flex;flex-direction:column}.tree-children button{height:24px;border:0;background:transparent;color:#6f7e91;text-align:left;display:flex;align-items:center;gap:6px;font-size:10px;cursor:pointer;border-radius:4px;padding:0 6px}.tree-children button.active,.tree-children button:hover{color:#1769ff;background:#f0f6ff}.empty-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#8d9bad;padding:30px}.empty-tab i{font-size:38px;color:#83b3fb;margin-bottom:12px}.empty-tab strong{color:#304157;font-size:14px}.empty-tab p{font-size:11px;margin:7px 0 15px}.empty-tab button{border:1px solid #9ec0ff;background:#f7faff;color:#1769ff;border-radius:7px;padding:8px 12px;cursor:pointer}.rail-panel-title{height:64px;padding:0 18px;border-bottom:1px solid #edf1f6;display:flex;align-items:center;justify-content:space-between;color:#7d8da1}.rail-panel-title>div{display:flex;flex-direction:column;gap:3px}.rail-panel-title strong{font-size:14px;color:#26384f}.rail-panel-title span{font-size:9px;color:#a1adbb}.rail-panel-title>i{font-size:18px}.asset-library{padding:10px 16px;display:grid;grid-template-columns:1fr 1fr;gap:9px;overflow:auto}.asset-library button{border:1px solid #e7edf4;background:#fff;border-radius:8px;padding:5px;text-align:left;color:#526277;cursor:pointer}.asset-library button:hover{border-color:#94baff;box-shadow:0 4px 12px rgba(50,85,130,.07)}.asset-library img{width:100%;height:86px;display:block;object-fit:cover;border-radius:5px}.asset-library span{display:block;padding:7px 3px 3px;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.icon-library{padding:18px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.icon-library button{height:54px;border:1px solid #e8edf4;background:#f9fbfd;border-radius:8px;color:#4c7fe4;font-size:22px;cursor:pointer}.icon-library button:hover{background:#eef5ff;border-color:#9fc0ff}
+.left-workspace{width:392px;min-width:392px;height:100%;display:flex;background:#fff;border-right:1px solid #e7edf4}.left-rail{width:68px;flex:0 0 68px;border-right:1px solid #edf1f6;display:flex;flex-direction:column;padding:10px 7px 12px;gap:5px;background:#f8fafc}.left-rail button{height:58px;border:0;border-radius:9px;background:transparent;color:#8492a6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10px;cursor:pointer;position:relative}.left-rail button i{font-size:20px}.left-rail button.active{color:#1769ff;background:#eaf2ff}.left-rail button.active::before{content:'';position:absolute;left:-7px;top:8px;bottom:8px;width:3px;background:#1769ff;border-radius:0 3px 3px 0}.left-rail button:hover{color:#1769ff}.left-rail .rail-bottom{margin-top:auto}.library-panel{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}.panel-tabs{height:54px;padding:0 20px;border-bottom:1px solid #edf1f6;display:flex;gap:28px;align-items:flex-end;position:relative}.panel-tabs button{height:54px;border:0;border-bottom:2px solid transparent;background:transparent;color:#55657a;font-size:13px;cursor:pointer}.panel-tabs button.active{color:#1769ff;border-bottom-color:#1769ff;font-weight:700}.panel-fold{position:absolute;right:18px;top:20px;color:#8190a4;font-size:12px}.search-box{margin:14px 16px 7px;height:38px;display:flex;align-items:center;gap:7px;padding:0 11px;border-radius:8px;background:#f5f7fa;color:#9aa7b7}.search-box input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:#34465b;font-size:11px}.library-scroll{flex:1;overflow:auto;padding:0 15px 22px;scrollbar-width:thin}.component-section{padding-top:12px}.component-section.first{padding-top:8px}.section-title{height:28px;display:flex;align-items:center;justify-content:space-between;color:#8391a3;font-size:11px}.section-title strong{color:#23364d;font-size:12px}.section-title button{border:0;background:transparent;color:#8996a7;cursor:pointer}.more{font-size:10px;display:flex;align-items:center;gap:1px}.component-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:7px}.component-card{height:68px;border:1px solid #edf1f6;border-radius:7px;background:#f9fbfd;color:#526277;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:grab;transition:.16s ease}.component-card:hover{border-color:#9fc0ff;background:#f4f8ff;box-shadow:0 4px 12px rgba(45,79,122,.06)}.component-icon{width:27px;height:27px;border-radius:6px;display:grid;place-items:center;background:#eaf2ff;color:#3b7af7;font-size:17px}.component-card>span:last-child{font-size:10px}.component-card.marketing .component-icon{background:#fff0ef;color:#ff6363}.marketing-section{padding-top:14px}.page-tree-section{margin-top:14px;padding-top:10px;border-top:1px solid #edf1f5}.tree-add{font-size:16px!important;color:#526479!important}.tree-root{height:30px;display:flex;align-items:center;gap:5px;padding:0 7px;border-radius:4px;background:#dfeeff;color:#1769ff;font-size:11px;white-space:nowrap;overflow:hidden}.tree-root span{overflow:hidden;text-overflow:ellipsis}.tree-children{margin-left:15px;padding:4px 0 0 10px;border-left:1px solid #dce5f0;display:flex;flex-direction:column}.tree-children button{height:24px;border:0;background:transparent;color:#6f7e91;text-align:left;display:flex;align-items:center;gap:6px;font-size:10px;cursor:pointer;border-radius:4px;padding:0 6px}.tree-children button.active,.tree-children button:hover{color:#1769ff;background:#f0f6ff}.empty-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#8d9bad;padding:30px}.empty-tab i{font-size:38px;color:#83b3fb;margin-bottom:12px}.empty-tab strong{color:#304157;font-size:14px}.empty-tab p{font-size:11px;margin:7px 0 15px}.empty-tab button{border:1px solid #9ec0ff;background:#f7faff;color:#1769ff;border-radius:7px;padding:8px 12px;cursor:pointer}.page-manager{flex:1;min-height:0;display:flex;flex-direction:column}.page-manager-head{height:66px;padding:0 17px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #edf1f5}.page-manager-head>div{display:flex;flex-direction:column;gap:3px}.page-manager-head strong{font-size:13px;color:#26384f}.page-manager-head span{font-size:9px;color:#9aa7b7}.page-manager-head button{height:29px;border:1px solid #a8c8ff;border-radius:6px;background:#f8fbff;color:#1769ff;font-size:10px;display:flex;align-items:center;gap:3px;cursor:pointer}.page-manager-list{padding:12px;overflow:auto;display:flex;flex-direction:column;gap:8px}.page-manager-item{width:100%;height:62px;border:1px solid #e8edf4;border-radius:8px;background:#fff;padding:0 9px;display:grid;grid-template-columns:34px 1fr 48px;align-items:center;gap:8px;text-align:left;cursor:pointer}.page-manager-item.active{border-color:#8bb7ff;background:#f6f9ff;box-shadow:0 0 0 2px rgba(23,105,255,.05)}.page-index{width:32px;height:38px;border-radius:6px;background:#eef4fb;color:#6e8199;display:grid;place-items:center;font-size:10px;font-weight:700}.page-manager-item.active .page-index{background:#1769ff;color:#fff}.page-copy{min-width:0;display:flex;flex-direction:column;gap:4px}.page-copy strong{font-size:10px;color:#34465b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.page-copy small{font-size:8px;color:#9aa7b7}.page-actions{display:flex;gap:5px;opacity:0;justify-content:flex-end}.page-manager-item:hover .page-actions,.page-manager-item.active .page-actions{opacity:1}.page-actions i{width:20px;height:20px;border-radius:4px;display:grid;place-items:center;color:#72839a}.page-actions i:hover{background:#eaf2ff;color:#1769ff}.rail-panel-title{height:64px;padding:0 18px;border-bottom:1px solid #edf1f6;display:flex;align-items:center;justify-content:space-between;color:#7d8da1}.rail-panel-title>div{display:flex;flex-direction:column;gap:3px}.rail-panel-title strong{font-size:14px;color:#26384f}.rail-panel-title span{font-size:9px;color:#a1adbb}.rail-panel-title>i{font-size:18px}.asset-library{padding:10px 16px;display:grid;grid-template-columns:1fr 1fr;gap:9px;overflow:auto}.asset-library button{border:1px solid #e7edf4;background:#fff;border-radius:8px;padding:5px;text-align:left;color:#526277;cursor:pointer}.asset-library button:hover{border-color:#94baff;box-shadow:0 4px 12px rgba(50,85,130,.07)}.asset-library img{width:100%;height:86px;display:block;object-fit:cover;border-radius:5px}.asset-library span{display:block;padding:7px 3px 3px;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.icon-library{padding:18px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.icon-library button{height:54px;border:1px solid #e8edf4;background:#f9fbfd;border-radius:8px;color:#4c7fe4;font-size:22px;cursor:pointer}.icon-library button:hover{background:#eef5ff;border-color:#9fc0ff}
 @media(min-width:1700px){.left-workspace{width:454px;min-width:454px}.left-rail{width:78px;flex-basis:78px;padding-left:8px;padding-right:8px}.left-rail button.active::before{left:-8px}.component-card{height:72px}.component-grid{gap:10px}.library-scroll{padding-left:18px;padding-right:18px}.search-box{margin-left:18px;margin-right:18px}}
 @media(max-width:1440px){.left-workspace{width:360px;min-width:360px}.component-card{height:64px}.component-grid{gap:7px}}
 </style>
