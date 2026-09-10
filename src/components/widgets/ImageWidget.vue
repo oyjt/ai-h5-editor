@@ -1,7 +1,5 @@
 <script setup lang="ts">
-/**
- * 图片组件 Widget
- */
+import { computed } from 'vue'
 import { Image as VanImage } from 'vant'
 
 interface Props {
@@ -10,6 +8,7 @@ interface Props {
   width?: string
   height?: string
   objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down'
+  objectPosition?: string
   borderRadius?: string
 }
 
@@ -19,8 +18,13 @@ const props = withDefaults(defineProps<Props>(), {
   width: '100%',
   height: 'auto',
   objectFit: 'cover',
+  objectPosition: 'center center',
   borderRadius: '0',
 })
+
+const imageStyle = computed(() => ({
+  '--image-object-position': props.objectPosition,
+}))
 </script>
 
 <template>
@@ -31,8 +35,10 @@ const props = withDefaults(defineProps<Props>(), {
     :height="height"
     :fit="objectFit"
     :radius="borderRadius"
+    :style="imageStyle"
   />
 </template>
 
 <style scoped>
+:deep(.van-image__img){object-position:var(--image-object-position,center center)}
 </style>
