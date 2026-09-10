@@ -88,7 +88,7 @@
   --tab-height:52px;
 
   /* Layout */
-  --header-height:72px;
+  --header-height:60px;
   --workspace-toolbar-height:64px;
   --editor-rail-width:68px;
   --property-panel-width:354px;
@@ -127,6 +127,13 @@
 .ds-panel-title{font-size:var(--font-size-md);font-weight:var(--font-weight-semibold);color:var(--text-primary)}
 .ds-muted{color:var(--text-muted)}
 .ds-focusable:focus-visible{outline:0;box-shadow:var(--focus-ring)}
+
+/* Unified search field: one white surface, no nested input fill. */
+.ds-search-field{box-sizing:border-box;border:1px solid var(--border-default)!important;border-radius:var(--radius-md)!important;background:var(--surface-1)!important;color:var(--text-muted);box-shadow:none!important;transition:border-color var(--motion-base) var(--ease-standard),box-shadow var(--motion-base) var(--ease-standard)!important}
+.ds-search-field:hover{border-color:var(--border-strong)!important}
+.ds-search-field:focus-within{border-color:var(--brand-400)!important;background:var(--surface-1)!important;box-shadow:var(--focus-ring)!important}
+.ds-search-field input{border:0!important;outline:0!important;background:transparent!important;box-shadow:none!important;-webkit-appearance:none;appearance:none;color:var(--text-primary)!important}
+.ds-search-field input::placeholder{color:var(--text-muted)!important}
 
 .el-overlay{background:var(--overlay-bg);backdrop-filter:blur(2px)}
 .el-dialog{border-radius:var(--radius-xl);background:var(--surface-1);box-shadow:var(--shadow-lg);overflow:hidden}
