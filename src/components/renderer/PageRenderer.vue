@@ -1,7 +1,4 @@
 <script setup lang="ts">
-/**
- * 页面渲染器 - 根据 PageSchema 渲染整个页面
- */
 import { computed } from 'vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import type { PageSchema, ComponentSchema } from '@/types/schema'
@@ -26,52 +23,28 @@ const emit = defineEmits<{
   updateOrder: [components: ComponentSchema[]]
 }>()
 
-// 全局样式
-const globalStyles = computed(() => {
-  return props.schema.globalStyles || {}
-})
-
-// 组件列表（用于拖拽排序）
+const globalStyles = computed(() => props.schema.globalStyles || {})
 const componentsList = computed({
   get: () => props.schema.components,
-  set: (value) => {
-    emit('updateOrder', value)
-  },
+  set: value => emit('updateOrder', value),
 })
-
-// 检测是否有固定在底部的组件
-const hasFixedBottom = computed(() => {
-  return props.schema.components.some(comp => {
-    // 检查 ActionBar 或 Tabbar 组件是否固定在底部
-    if (comp.type === 'actionbar' && comp.props?.placeholder) {
-      return true
-    }
-    if (comp.type === 'tabbar' && comp.props?.fixed) {
-      return true
-    }
-    return false
-  })
-})
-
-// 动态计算底部 padding
+const hasFixedBottom = computed(() => props.schema.components.some(comp => (
+  (comp.type === 'actionbar' && comp.props?.placeholder)
+  || (comp.type === 'tabbar' && comp.props?.fixed)
+)))
 const pageStyles = computed(() => {
   const styles = { ...globalStyles.value }
-  if (hasFixedBottom.value) {
-    // 为固定底部组件预留空间，确保内容不被遮挡
-    styles.paddingBottom = '60px'
-  }
+  if (hasFixedBottom.value) styles.paddingBottom = '60px'
   return styles
 })
 </script>
 
 <template>
   <div class="page-renderer" :style="pageStyles">
-    <!-- 可拖拽排序的组件列表 -->
     <VueDraggable
       v-if="isEditing"
       v-model="componentsList"
-      :animation="200"
-      handle=".component-drag-handle"
+      :animation="180"
       ghost-class="component-ghost"
       chosen-class="component-chosen"
       drag-class="component-drag"
@@ -91,7 +64,6 @@ const pageStyles = computed(() => {
       />
     </VueDraggable>
 
-    <!-- 预览模式：不可拖拽 -->
     <template v-else>
       <ComponentRenderer
         v-for="component in schema.components"
@@ -105,7 +77,6 @@ const pageStyles = computed(() => {
       />
     </template>
 
-    <!-- 空状态 -->
     <div v-if="schema.components.length === 0 && isEditing" class="empty-page">
       <i class="i-tabler-layout-grid" />
       <p>拖拽组件到这里开始设计</p>
@@ -114,74 +85,5 @@ const pageStyles = computed(() => {
 </template>
 
 <style scoped>
-.page-renderer {
-  width: 100%;
-  background: #fff;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-  min-height: 100%;
-  /* 设置为 relative，使内部的 absolute 定位相对于此容器 */
-  position: relative;
-}
-
-/* 覆盖 Vant ActionBar 和 Tabbar 的 fixed 定位 */
-.page-renderer :deep(.van-action-bar),
-.page-renderer :deep(.van-tabbar) {
-  position: absolute !important;
-  /* 确保相对于 page-renderer 定位，而不是视口 */
-}
-
-.draggable-container {
-  min-height: 400px;
-  width: 100%;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.empty-page {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 400px;
-  color: #909399;
-  pointer-events: none;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 0;
-}
-
-.empty-page i {
-  font-size: 64px;
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.empty-page p {
-  font-size: 14px;
-  margin: 0;
-}
-
-/* 拖拽样式 */
-:deep(.component-ghost) {
-  opacity: 0.5;
-  background: #f0f9ff;
-  border: 2px dashed #3b82f6;
-}
-
-:deep(.component-chosen) {
-  opacity: 0.8;
-  transform: scale(1.02);
-  transition: all 0.2s ease;
-}
-
-:deep(.component-drag) {
-  opacity: 0.8;
-  transform: rotate(2deg);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-}
+.page-renderer{width:100%;background:#fff;display:flex;flex-direction:column;box-sizing:border-box;min-height:100%;position:relative}.page-renderer :deep(.van-action-bar),.page-renderer :deep(.van-tabbar){position:absolute!important}.draggable-container{min-height:400px;width:100%;flex:1;display:flex;flex-direction:column}.empty-page{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;color:#909399;pointer-events:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:0}.empty-page i{font-size:52px;margin-bottom:13px;opacity:.42}.empty-page p{font-size:12px;margin:0}.component-ghost{opacity:.35!important;background:#eef6ff!important;outline:2px dashed #2684ff!important;outline-offset:-2px}.component-chosen{cursor:grabbing}.component-drag{opacity:.82!important;box-shadow:0 10px 28px rgba(35,73,122,.18)}
 </style>
