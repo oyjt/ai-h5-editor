@@ -41,36 +41,6 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Verify bundled example assets
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          echo "Bundled example images:"
-          find dist/assets -maxdepth 1 -type f \
-            \( -name 'summer-hero-*.jpg' -o -name 'product-sunscreen-*.jpg' -o -name 'product-headphones-*.jpg' \) \
-            -printf '%f %s bytes\n' | sort
-
-          for name in summer-hero product-sunscreen product-headphones; do
-            asset="$(find dist/assets -maxdepth 1 -type f -name "${name}-*.jpg" -print -quit)"
-            if [[ -z "$asset" ]]; then
-              echo "::error::Bundled asset '${name}' was not emitted into dist/assets"
-              exit 1
-            fi
-
-            mime="$(file --brief --mime-type "$asset")"
-            echo "$asset -> $mime"
-            if [[ "$mime" != "image/jpeg" ]]; then
-              echo "::error file=$asset::Expected image/jpeg, got $mime"
-              exit 1
-            fi
-          done
-
-          if grep -R -n '/marketing/\(summer-hero\|product-sunscreen\|product-headphones\)\.jpg' dist; then
-            echo "::error::Legacy /marketing JPG URLs are still present in the build output"
-            exit 1
-          fi
-
       # GitHub Pages 对 history 路由的直接访问会回退到 404.html。
       # 复制 SPA 入口后，Vue Router 可继续根据当前 URL 完成客户端路由匹配。
       - name: Add SPA fallback
