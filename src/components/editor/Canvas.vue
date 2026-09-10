@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import summerHero from '@/assets/example/summer-hero.jpg'
 import { useEditorStore } from '@/stores/editor'
 import PageRenderer from '@/components/renderer/PageRenderer.vue'
 import { getAllComponents } from '@/config/component-registry'
@@ -8,8 +9,7 @@ import { createComponentSchema } from '@/utils/schema-generator'
 
 const editorStore = useEditorStore()
 const isDragOver = ref(false)
-const asset = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`
-const heroUrl = asset('marketing/summer-hero.jpg')
+const heroUrl = summerHero
 const selectedComponent = computed(() => editorStore.selectedComponent)
 const previewStyle = computed(() => {
   const scale = editorStore.canvasZoom / 100
