@@ -1,8 +1,9 @@
 import type { PageSchema } from '@/types/schema'
+import summerHero from '@/assets/example/summer-hero.jpg'
+import productSunscreen from '@/assets/example/product-sunscreen.jpg'
+import productHeadphones from '@/assets/example/product-headphones.jpg'
 import { createEmptyPageSchema, createComponentSchema } from '@/utils/schema-generator'
 import { getComponentConfig } from './component-registry'
-
-const asset = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`
 
 function createFromRegistry(type: string, props: Record<string, unknown> = {}, styles: Record<string, unknown> = {}) {
   const config = getComponentConfig(type)
@@ -30,7 +31,7 @@ export function createMarketingDemoPage(): PageSchema {
 
   page.components = [
     createFromRegistry('image', {
-      src: asset('marketing/summer-hero.jpg'),
+      src: summerHero,
       alt: '夏日焕新季',
       width: '100%',
       height: '246px',
@@ -41,8 +42,8 @@ export function createMarketingDemoPage(): PageSchema {
     }),
     createFromRegistry('coupon', {}, { margin: '0' }),
     createFromRegistry('goodsList', {
-      productOneImage: asset('marketing/product-sunscreen.jpg'),
-      productTwoImage: asset('marketing/product-headphones.jpg'),
+      productOneImage: productSunscreen,
+      productTwoImage: productHeadphones,
     }, { margin: '0' }),
     createFromRegistry('marketingForm', {}, { margin: '0' }),
     createFromRegistry('tabbar', {
