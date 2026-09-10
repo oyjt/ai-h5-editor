@@ -1,22 +1,11 @@
-/**
- * 页面导出工具
- */
-
 import type { PageSchema } from '@/types/schema'
 
-/**
- * 导出为 JSON
- */
 export function exportAsJSON(schema: PageSchema): string {
   return JSON.stringify(schema, null, 2)
 }
 
-/**
- * 下载 JSON 文件
- */
-export function downloadJSON(schema: PageSchema, filename = 'page.json') {
-  const json = exportAsJSON(schema)
-  const blob = new Blob([json], { type: 'application/json' })
+function triggerDownload(content: BlobPart, type: string, filename: string) {
+  const blob = new Blob([content], { type })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
@@ -25,232 +14,81 @@ export function downloadJSON(schema: PageSchema, filename = 'page.json') {
   URL.revokeObjectURL(url)
 }
 
-/**
- * 导出为 HTML
- */
-export function exportAsHTML(schema: PageSchema): string {
-  // 生成组件 HTML
-  function generateComponentHTML(component: any): string {
-    const { type, props, styles, children } = component
+export function downloadJSON(schema: PageSchema, filename = 'page.json') {
+  triggerDownload(exportAsJSON(schema), 'application/json', filename)
+}
 
-    // 样式转换
-    const styleStr = Object.entries(styles || {})
-      .map(([key, value]) => {
-        // 将驼峰命名转换为短横线命名
-        const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase()
-        return `${cssKey}: ${value}`
-      })
-      .join('; ')
+function toStyleString(styles: Record<string, unknown> = {}) {
+  return Object.entries(styles)
+    .filter(([, value]) => value !== undefined && value !== null)
+    .map(([key, value]) => `${key.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${String(value)}`)
+    .join('; ')
+}
 
-    let html = ''
+function escapeHTML(value: unknown) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;')
+}
 
-    // 根据组件类型生成 HTML
-    switch (type) {
-      case 'text':
-        html = `<div style="${styleStr}">${props.content || ''}</div>`
-        break
+function renderComponent(component: any): string {
+  const props = component.props || {}
+  const children = Array.isArray(component.children) ? component.children.map(renderComponent).join('') : ''
+  const style = toStyleString(component.styles || {})
 
-      case 'image':
-        html = `<div style="${styleStr}"><img src="${props.src || ''}" alt="${props.alt || ''}" style="width: ${props.width || '100%'}; height: ${props.height || 'auto'}; object-fit: ${props.objectFit || 'cover'}; border-radius: ${props.borderRadius || '0'};" /></div>`
-        break
-
-      case 'button':
-        html = `<div style="${styleStr}"><button class="van-button van-button--${props.type || 'default'} van-button--${props.size || 'normal'}${props.block ? ' van-button--block' : ''}${props.round ? ' van-button--round' : ''}${props.plain ? ' van-button--plain' : ''}"${props.disabled ? ' disabled' : ''}>${props.text || '按钮'}</button></div>`
-        break
-
-      default:
-        html = `<div style="${styleStr}">未知组件: ${type}</div>`
-    }
-
-    // 递归处理子组件
-    if (children && children.length > 0) {
-      const childrenHTML = children.map(generateComponentHTML).join('\n')
-      html = html.replace('</div>', `${childrenHTML}</div>`)
-    }
-
-    return html
+  if (component.type === 'text') return `<div style="${style}">${escapeHTML(props.content)}</div>`
+  if (component.type === 'image') {
+    const imageStyle = [
+      `width:${props.width || '100%'}`,
+      `height:${props.height || 'auto'}`,
+      `object-fit:${props.objectFit || 'cover'}`,
+      `object-position:${props.objectPosition || 'center center'}`,
+      `border-radius:${props.borderRadius || '0'}`,
+    ].join(';')
+    return `<div style="${style}"><img src="${escapeHTML(props.src)}" alt="${escapeHTML(props.alt)}" style="${imageStyle}" />${children}</div>`
   }
+  if (component.type === 'button') return `<div style="${style}"><button>${escapeHTML(props.text || '按钮')}</button>${children}</div>`
+  return `<div style="${style}" data-component="${escapeHTML(component.type)}">${children}</div>`
+}
 
-  // 生成完整 HTML
-  const componentsHTML = schema.components.map(generateComponentHTML).join('\n')
-
-  const html = `<!DOCTYPE html>
+export function exportAsHTML(schema: PageSchema): string {
+  const components = schema.components.map(renderComponent).join('\n')
+  const globalStyle = toStyleString(schema.globalStyles || {})
+  return `<!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="description" content="${schema.meta?.description || ''}">
-  <meta name="keywords" content="${schema.meta?.keywords?.join(', ') || ''}">
-  <title>${schema.meta?.title || schema.name}</title>
-
-  <!-- Vant CSS -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vant@4/lib/index.css">
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <meta name="description" content="${escapeHTML(schema.meta?.description || '')}" />
+  <title>${escapeHTML(schema.meta?.title || schema.name)}</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      background: #f5f7fa;
-    }
-
-    #app {
-      max-width: 750px;
-      margin: 0 auto;
-      background: #fff;
-      min-height: 100vh;
-    }
-
-    /* Vant Button 样式 */
-    .van-button {
-      position: relative;
-      display: inline-block;
-      box-sizing: border-box;
-      height: 44px;
-      margin: 0;
-      padding: 0 15px;
-      font-size: 16px;
-      line-height: 1.2;
-      text-align: center;
-      border-radius: 2px;
-      cursor: pointer;
-      transition: opacity 0.2s;
-      border: 1px solid #ebedf0;
-      background: #fff;
-      color: #323233;
-    }
-
-    .van-button--primary {
-      color: #fff;
-      background: #1989fa;
-      border: 1px solid #1989fa;
-    }
-
-    .van-button--success {
-      color: #fff;
-      background: #07c160;
-      border: 1px solid #07c160;
-    }
-
-    .van-button--danger {
-      color: #fff;
-      background: #ee0a24;
-      border: 1px solid #ee0a24;
-    }
-
-    .van-button--warning {
-      color: #fff;
-      background: #ff976a;
-      border: 1px solid #ff976a;
-    }
-
-    .van-button--large {
-      width: 100%;
-      height: 50px;
-    }
-
-    .van-button--small {
-      height: 32px;
-      padding: 0 8px;
-      font-size: 12px;
-    }
-
-    .van-button--mini {
-      height: 24px;
-      padding: 0 4px;
-      font-size: 10px;
-    }
-
-    .van-button--block {
-      display: block;
-      width: 100%;
-    }
-
-    .van-button--round {
-      border-radius: 999px;
-    }
-
-    .van-button--plain {
-      background: #fff;
-    }
-
-    .van-button--plain.van-button--primary {
-      color: #1989fa;
-    }
-
-    .van-button--plain.van-button--success {
-      color: #07c160;
-    }
-
-    .van-button--plain.van-button--danger {
-      color: #ee0a24;
-    }
-
-    .van-button--plain.van-button--warning {
-      color: #ff976a;
-    }
-
-    .van-button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .van-button:active {
-      opacity: 0.7;
-    }
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f5f7fa}#app{width:100%;max-width:750px;min-height:100vh;margin:0 auto;background:#fff;${globalStyle}}img{display:inline-block;max-width:100%}button{font:inherit}
   </style>
 </head>
-<body>
-  <div id="app">
-${componentsHTML}
-  </div>
-</body>
+<body><main id="app">${components}</main></body>
 </html>`
-
-  return html
 }
 
-/**
- * 下载 HTML 文件
- */
 export function downloadHTML(schema: PageSchema, filename = 'page.html') {
-  const html = exportAsHTML(schema)
-  const blob = new Blob([html], { type: 'text/html' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  link.click()
-  URL.revokeObjectURL(url)
+  triggerDownload(exportAsHTML(schema), 'text/html;charset=utf-8', filename)
 }
 
-/**
- * 生成预览链接（使用 URL 参数）
- */
 export function generatePreviewURL(schema: PageSchema): string {
-  const json = exportAsJSON(schema)
-  const encoded = encodeURIComponent(json)
-  const baseURL = window.location.origin + window.location.pathname
-  return `${baseURL}#/preview?data=${encoded}`
+  const encoded = encodeURIComponent(JSON.stringify(schema))
+  const route = `${window.location.origin}${import.meta.env.BASE_URL}preview`
+  return `${route}?data=${encoded}`
 }
 
-/**
- * 从 URL 参数解析页面数据
- */
 export function parsePreviewURL(): PageSchema | null {
   try {
-    const params = new URLSearchParams(window.location.hash.split('?')[1])
-    const data = params.get('data')
-    if (!data) {
-      return null
-    }
-    return JSON.parse(decodeURIComponent(data))
+    const searchParams = new URLSearchParams(window.location.search)
+    const legacyParams = new URLSearchParams(window.location.hash.split('?')[1] || '')
+    const data = searchParams.get('data') || legacyParams.get('data')
+    if (!data) return null
+    return JSON.parse(decodeURIComponent(data)) as PageSchema
   }
   catch (error) {
     console.error('解析预览 URL 失败:', error)
