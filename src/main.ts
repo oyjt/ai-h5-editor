@@ -3,6 +3,7 @@ import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import 'vant/lib/index.css'
 import 'uno.css'
+import './styles/design-system.css'
 import './styles/global.css'
 
 import App from './App.vue'
