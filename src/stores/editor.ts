@@ -78,7 +78,14 @@ export const useEditorStore = defineStore('editor', () => {
     const duplicate = cloneSchema(source)
     duplicate.id = `${source.id}-copy-${Date.now()}`
     duplicate.name = `${source.name || `页面 ${index + 1}`} 副本`
-    duplicate.meta = { ...duplicate.meta, title: duplicate.name, updateTime: Date.now() }
+    duplicate.meta = {
+      title: duplicate.name,
+      description: duplicate.meta?.description ?? '',
+      keywords: duplicate.meta?.keywords ?? [],
+      author: duplicate.meta?.author,
+      createTime: duplicate.meta?.createTime ?? Date.now(),
+      updateTime: Date.now(),
+    }
     pages.value.splice(index + 1, 0, duplicate)
     activatePage(index + 1)
     savePage()
