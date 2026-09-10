@@ -41,22 +41,23 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Verify marketing assets
+      - name: Verify bundled example assets
         shell: bash
         run: |
           set -euo pipefail
 
-          assets=(
-            "dist/marketing/summer-hero.jpg"
-            "dist/marketing/product-sunscreen.jpg"
-            "dist/marketing/product-headphones.jpg"
-          )
+          echo "Bundled example images:"
+          find dist/assets -maxdepth 1 -type f \
+            \( -name 'summer-hero-*.jpg' -o -name 'product-sunscreen-*.jpg' -o -name 'product-headphones-*.jpg' \) \
+            -printf '%f %s bytes\n' | sort
 
-          echo "Marketing assets in dist:"
-          find dist/marketing -maxdepth 1 -type f -printf '%f %s bytes\n' | sort
+          for name in summer-hero product-sunscreen product-headphones; do
+            asset="$(find dist/assets -maxdepth 1 -type f -name "${name}-*.jpg" -print -quit)"
+            if [[ -z "$asset" ]]; then
+              echo "::error::Bundled asset '${name}' was not emitted into dist/assets"
+              exit 1
+            fi
 
-          for asset in "${assets[@]}"; do
-            test -s "$asset"
             mime="$(file --brief --mime-type "$asset")"
             echo "$asset -> $mime"
             if [[ "$mime" != "image/jpeg" ]]; then
@@ -64,6 +65,11 @@ jobs:
               exit 1
             fi
           done
+
+          if grep -R -n '/marketing/\(summer-hero\|product-sunscreen\|product-headphones\)\.jpg' dist; then
+            echo "::error::Legacy /marketing JPG URLs are still present in the build output"
+            exit 1
+          fi
 
       # GitHub Pages 对 history 路由的直接访问会回退到 404.html。
       # 复制 SPA 入口后，Vue Router 可继续根据当前 URL 完成客户端路由匹配。
@@ -102,43 +108,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
-      - name: Verify deployed marketing assets
-        shell: bash
-        env:
-          PREVIEW_BASE_URL: https://icnpath.com/ai-h5-editor
-        run: |
-          set -euo pipefail
-
-          # Give the CDN/static host a short window to expose the new deployment.
-          sleep 5
-
-          assets=(
-            "marketing/summer-hero.jpg"
-            "marketing/product-sunscreen.jpg"
-            "marketing/product-headphones.jpg"
-          )
-
-          for asset in "${assets[@]}"; do
-            url="${PREVIEW_BASE_URL}/${asset}"
-            echo "Checking $url"
-
-            headers="$(curl --silent --show-error --location --retry 4 --retry-delay 2 --dump-header - --output /tmp/asset-body "$url")"
-            status="$(printf '%s\n' "$headers" | awk 'toupper($1) ~ /^HTTP\// { code=$2 } END { print code }')"
-            content_type="$(printf '%s\n' "$headers" | awk 'BEGIN{IGNORECASE=1} /^content-type:/ { value=$0 } END { sub(/^[^:]+:[[:space:]]*/, "", value); sub(/\r$/, "", value); print tolower(value) }')"
-
-            echo "HTTP $status | Content-Type: ${content_type:-<missing>}"
-
-            if [[ "$status" != "200" ]]; then
-              echo "::error::$url returned HTTP $status"
-              exit 1
-            fi
-
-            if [[ "$content_type" != image/jpeg* ]]; then
-              echo "::error::$url expected image/jpeg but got '${content_type:-missing}'. This usually means the static host returned the SPA index.html fallback instead of the image file."
-              echo "Response body preview:"
-              head -c 200 /tmp/asset-body || true
-              echo
-              exit 1
-            fi
-          done
