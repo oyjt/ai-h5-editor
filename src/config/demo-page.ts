@@ -33,11 +33,14 @@ export function createMarketingDemoPage(): PageSchema {
       src: asset('marketing/summer-hero.jpg'),
       alt: '夏日焕新季',
       width: '100%',
-      height: '246px',
+      height: '298px',
       objectFit: 'cover',
+      objectPosition: 'center center',
       borderRadius: '11px',
     }, {
-      margin: '0 10px 7px',
+      margin: '0 10px 8px',
+      textAlign: 'center',
+      opacity: 1,
     }),
     createFromRegistry('coupon', {}, { margin: '0' }),
     createFromRegistry('goodsList', {
