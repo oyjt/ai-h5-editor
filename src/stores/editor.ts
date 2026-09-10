@@ -91,6 +91,37 @@ export const useEditorStore = defineStore('editor', () => {
     savePage()
     return duplicate
   }
+  function renamePage(index: number, name: string) {
+    const page = pages.value[index]
+    const nextName = name.trim()
+    if (!page || !nextName) return false
+    page.name = nextName
+    page.meta = {
+      title: nextName,
+      description: page.meta?.description ?? '',
+      keywords: page.meta?.keywords ?? [],
+      author: page.meta?.author,
+      createTime: page.meta?.createTime ?? Date.now(),
+      updateTime: Date.now(),
+    }
+    if (index === currentPageIndex.value) currentPage.value = page
+    savePage()
+    return true
+  }
+  function movePage(index: number, direction: 'up' | 'down') {
+    syncCurrentPageToProject()
+    const target = direction === 'up' ? index - 1 : index + 1
+    if (index < 0 || index >= pages.value.length || target < 0 || target >= pages.value.length) return false
+    const activeId = currentPage.value.id
+    const [page] = pages.value.splice(index, 1)
+    if (!page) return false
+    pages.value.splice(target, 0, page)
+    const nextActiveIndex = pages.value.findIndex(item => item.id === activeId)
+    currentPageIndex.value = Math.max(0, nextActiveIndex)
+    currentPage.value = pages.value[currentPageIndex.value]
+    savePage()
+    return true
+  }
   function deletePage(index = currentPageIndex.value) {
     if (pages.value.length <= 1 || !pages.value[index]) return false
     pages.value.splice(index, 1)
@@ -235,6 +266,8 @@ export const useEditorStore = defineStore('editor', () => {
     hoveredComponent,
     addPage,
     duplicatePage,
+    renamePage,
+    movePage,
     deletePage,
     switchPage,
     addComponent,
