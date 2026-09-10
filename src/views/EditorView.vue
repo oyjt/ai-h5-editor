@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import Toolbar from '@/components/editor/Toolbar.vue'
+import WorkspaceToolbar from '@/components/editor/WorkspaceToolbar.vue'
 import ComponentPanel from '@/components/editor/ComponentPanel.vue'
 import Canvas from '@/components/editor/Canvas.vue'
 import PropertyPanel from '@/components/editor/PropertyPanel.vue'
@@ -8,7 +9,7 @@ import { useEditorStore } from '@/stores/editor'
 import { createMarketingDemoPage } from '@/config/demo-page'
 
 const editorStore = useEditorStore()
-const DEMO_VERSION = '2026-09-10-high-fidelity-v7-public-assets'
+const DEMO_VERSION = '2026-09-10-high-fidelity-v8-layout'
 const DEMO_VERSION_KEY = 'h5-editor-demo-version'
 
 function selectHero() {
@@ -35,12 +36,17 @@ onMounted(() => {
     <Toolbar />
     <div class="editor-main">
       <ComponentPanel />
-      <Canvas />
-      <PropertyPanel />
+      <section class="workspace-column">
+        <WorkspaceToolbar />
+        <div class="workspace-content">
+          <Canvas />
+          <PropertyPanel />
+        </div>
+      </section>
     </div>
   </div>
 </template>
 
 <style scoped>
-.editor-view{width:100%;height:100%;display:flex;flex-direction:column;background:var(--editor-bg-primary);min-width:1280px}.editor-main{flex:1;min-height:0;display:flex;overflow:hidden}
+.editor-view{width:100%;height:100%;display:flex;flex-direction:column;background:var(--editor-bg-primary);min-width:1280px}.editor-main{flex:1;min-height:0;display:flex;overflow:hidden}.workspace-column{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}.workspace-content{flex:1;min-height:0;display:flex;overflow:hidden}
 </style>
