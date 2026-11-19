@@ -72,6 +72,13 @@
 - 发布成功页
 - 复制访问链接
 
+## ud-design 阶段 1（AI 对话与规范校验）
+
+- **AI 对话**：左侧栏第一项。描述需求即可生成多个页面；先在画布上点选或「框选改图」选中组件，再说怎么改。支持多会话、规范优先 / Prompt 优先两种模式，偏离规范的要求会记入「偏离清单」。
+- **Agent 补丁**：Agent 只产出 `create_page / append_component / patch_component / delete_component`，由 `src/agent/apply.ts` 应用，一次生成合并为一条撤销记录。默认使用本地规划器；设置 `VITE_LLM_ENDPOINT`（OpenAI 兼容的内部网关）、`VITE_LLM_MODEL` 后改走模型网关，失败时自动回落。
+- **Design Token**：`tokens/ant-design.tokens.json` 经 Style Dictionary（`pnpm tokens`，dev/build 自动执行）生成 CSS 变量、UnoCSS 主题色（`bg-ud-primary`）与 `src/design/tokens.generated.ts`。Schema 里的值可写 `{color.primary}`，预览解析为 CSS 变量，导出 HTML 时解析为具体值。
+- **规范校验**：`src/design/spec-validator.ts` 检查颜色、4px 间距栅格、圆角与字号刻度，AI 面板底部可查看并一键修正。
+
 ## 技术栈
 
 - Vue 3

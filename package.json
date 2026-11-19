@@ -4,9 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "tokens": "node scripts/build-tokens.mjs",
+    "dev": "pnpm tokens && vite",
+    "build": "pnpm tokens && tsc && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^7.7.3",
@@ -15,6 +17,7 @@
     "@unocss/vite": "^66.6.6",
     "@vitejs/plugin-vue": "^6.0.5",
     "eslint": "^10.0.3",
+    "style-dictionary": "^5.8.0",
     "typescript": "~5.9.3",
     "unocss": "^66.6.6",
     "vite": "^8.0.0"

@@ -4,6 +4,7 @@ import 'element-plus/dist/index.css'
 import 'vant/lib/index.css'
 import 'uno.css'
 import './styles/design-system.css'
+import './styles/tokens.generated.css'
 import './styles/global.css'
 
 import App from './App.vue'

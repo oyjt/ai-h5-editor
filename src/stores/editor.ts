@@ -191,6 +191,23 @@ export const useEditorStore = defineStore('editor', () => {
     if (component) updateComponent(id, { styles: { ...component.styles, ...styles } })
   }
 
+  /** 把一次批量改动合并成一条历史记录，撤销时一步回到改动前 */
+  function commitPageTransform(next: PageSchema) {
+    currentPage.value = next
+    syncCurrentPageToProject()
+    useHistoryStore().pushHistory(cloneSchema(currentPage.value))
+    if (selectedComponentId.value && !findComponentById(currentPage.value.components, selectedComponentId.value)) selectedComponentId.value = null
+  }
+  function updateGlobalStyles(styles: Record<string, any>) {
+    const next = cloneSchema(currentPage.value)
+    next.globalStyles = { ...next.globalStyles, ...styles }
+    commitPageTransform(next)
+  }
+
+  /** Agent 选区：框选或多选的组件 id，修改类指令作用于它们 */
+  const agentSelectionIds = ref<string[]>([])
+  function setAgentSelection(ids: string[]) { agentSelectionIds.value = ids }
+
   function selectComponent(id: string | null) { selectedComponentId.value = id }
   function hoverComponent(id: string | null) { hoveredComponentId.value = id }
   function setCanvasZoom(value: number) { canvasZoom.value = Math.min(150, Math.max(50, value)) }
@@ -278,6 +295,10 @@ export const useEditorStore = defineStore('editor', () => {
     updateComponentProps,
     updateComponentStyles,
     updateComponentsOrder,
+    commitPageTransform,
+    updateGlobalStyles,
+    agentSelectionIds,
+    setAgentSelection,
     selectComponent,
     hoverComponent,
     setCanvasZoom,

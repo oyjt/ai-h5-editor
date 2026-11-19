@@ -1,4 +1,5 @@
 import { defineConfig, presetAttributify, presetIcons, presetWind4 } from 'unocss'
+import { unoThemeColors } from './src/design/uno-theme.generated'
 
 export default defineConfig({
   presets: [
@@ -29,6 +30,8 @@ export default defineConfig({
       warning: '#e6a23c',
       danger: '#f56c6c',
       info: '#909399',
+      // 设计稿内容使用的 Design Token，类名形如 bg-ud-primary、text-ud-text-secondary
+      ud: unoThemeColors,
     },
   },
   // 配置内容扫描，包括 TypeScript 配置文件

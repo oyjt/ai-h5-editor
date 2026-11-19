@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import type { PageSchema, ComponentSchema } from '@/types/schema'
+import { resolveTokensDeep } from '@/design/tokens'
 import ComponentRenderer from './ComponentRenderer.vue'
 
 interface Props {
@@ -23,7 +24,7 @@ const emit = defineEmits<{
   updateOrder: [components: ComponentSchema[]]
 }>()
 
-const globalStyles = computed(() => props.schema.globalStyles || {})
+const globalStyles = computed(() => resolveTokensDeep(props.schema.globalStyles || {}))
 const componentsList = computed({
   get: () => props.schema.components,
   set: value => emit('updateOrder', value),
