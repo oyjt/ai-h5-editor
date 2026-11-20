@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import QRCode from 'qrcode'
 import { ElMessage } from 'element-plus'
 import PlatformHeader from '@/components/platform/PlatformHeader.vue'
 import { auditTokens, generateCode } from '@/design/codegen'
@@ -36,6 +37,21 @@ const checks = computed(() => [
   { ok: audit.value.hardcoded === 0, label: audit.value.hardcoded ? `${audit.value.hardcoded} 处硬编码颜色` : '无硬编码颜色' },
   { ok: audit.value.refs > 0, label: `${audit.value.refs} 处 Token 引用` },
 ])
+
+const qr = ref('')
+const qrNote = ref('')
+watch(page, async (value) => {
+  qr.value = ''
+  const url = generatePreviewURL(value)
+  const local = /^https?:\/\/(localhost|127\.|192\.168\.|10\.)/.test(url)
+  try {
+    qr.value = await QRCode.toDataURL(url, { width: 220, margin: 1 })
+    qrNote.value = local ? '当前是本机地址，手机需与电脑在同一局域网并能访问该地址。页面里的本地上传图片不会带到手机上。' : '页面数据编码在链接中，页面里的本地上传图片不会带到手机上。'
+  }
+  catch {
+    qrNote.value = '页面内容过大，装不进二维码。请用「在新窗口预览」，或到设置里导出项目文件。'
+  }
+}, { immediate: true, deep: true })
 
 async function copy() {
   try {
@@ -89,6 +105,11 @@ async function preview() {
 
         <section class="rail">
           <div class="card">
+            <strong>真机走查</strong>
+            <div class="qr"><img v-if="qr" :src="qr" alt="预览二维码"><span v-else>无法生成二维码</span></div>
+            <small>{{ qrNote }}</small>
+          </div>
+          <div class="card">
             <strong>走查清单</strong>
             <div v-for="c in checks" :key="c.label" class="check" :class="{ bad: !c.ok }"><i :class="c.ok ? 'i-tabler-check' : 'i-tabler-alert-triangle'" />{{ c.label }}</div>
             <small v-if="violations.length">可以到编辑器的 AI 面板一键修正偏离项。</small>
@@ -116,4 +137,5 @@ pre{margin:0;padding:16px;overflow:auto;max-height:620px;font:13px/1.65 ui-monos
 .rail{flex:0 1 300px;min-width:260px;display:flex;flex-direction:column;gap:12px}
 .card{background:#fff;border:1px solid #f0f0f0;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;font-size:13px;color:#434343}.card strong{color:#1f1f1f}.card p{margin:0}.card small{color:#8c8c8c;font-size:12px}
 .check{display:flex;align-items:center;gap:8px;color:#237804}.check.bad{color:#ad6800}
+.qr{width:180px;height:180px;margin:0 auto;border:1px solid #f0f0f0;border-radius:8px;display:grid;place-items:center;padding:6px;box-sizing:border-box;color:#8c8c8c;font-size:12px}.qr img{width:100%;height:100%}
 </style>
