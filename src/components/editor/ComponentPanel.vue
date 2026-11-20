@@ -24,7 +24,7 @@ const marketingPalette = [
   { key: 'group-buy', type: 'groupBuy', label: '拼团', icon: 'i-tabler-users' }, { key: 'flash-sale', type: 'flashSale', label: '秒杀', icon: 'i-tabler-clock-bolt' }, { key: 'points', type: 'goodsList', label: '积分商城', icon: 'i-tabler-gift' }, { key: 'member', type: 'card', label: '会员卡', icon: 'i-tabler-credit-card' }, { key: 'signin', type: 'button', label: '签到', icon: 'i-tabler-calendar-check' }, { key: 'poster', type: 'image', label: '裂变海报', icon: 'i-tabler-photo-share' },
 ]
 const marketingAssets = [
-  { name: '夏日活动主视觉', src: asset('marketing/summer-hero.jpg'), height: '298px' }, { name: '防晒商品图', src: asset('marketing/product-sunscreen.jpg'), height: '180px' }, { name: '耳机商品图', src: asset('marketing/product-headphones.jpg'), height: '180px' },
+  { name: '夏日活动主视觉', src: asset('marketing/summer-hero.svg'), height: '298px' }, { name: '防晒商品图', src: asset('marketing/product-sunscreen.svg'), height: '180px' }, { name: '耳机商品图', src: asset('marketing/product-headphones.svg'), height: '180px' },
 ]
 const iconItems = ['i-tabler-home','i-tabler-heart','i-tabler-shopping-bag','i-tabler-user','i-tabler-gift','i-tabler-ticket','i-tabler-bell','i-tabler-star','i-tabler-calendar','i-tabler-map-pin','i-tabler-phone','i-tabler-share']
 const structureNames: Record<string, string> = { image: 'Banner轮播图', coupon: '优惠券模块', goodsList: '商品推荐', marketingForm: '报名表单', tabbar: '底部按钮' }

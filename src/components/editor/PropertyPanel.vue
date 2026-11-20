@@ -23,7 +23,7 @@ const sections = ref<Record<string, boolean>>({ image: true, link: true, style: 
 const selectedComponent = computed(() => editorStore.selectedComponent)
 const componentConfig = computed(() => selectedComponent.value ? getComponentConfig(selectedComponent.value.type) : null)
 const isImageSelected = computed(() => selectedComponent.value?.type === 'image')
-const marketingHeroUrl = `${import.meta.env.BASE_URL}marketing/summer-hero.jpg`
+const marketingHeroUrl = `${import.meta.env.BASE_URL}marketing/summer-hero.svg`
 const selectedImageSrc = computed(() => String(selectedComponent.value?.props?.src || marketingHeroUrl))
 const imageWidth = computed(() => String(selectedComponent.value?.props?.width || '100%').replace('%', ''))
 const imageHeight = computed(() => String(selectedComponent.value?.props?.height || 'auto').replace('px', ''))

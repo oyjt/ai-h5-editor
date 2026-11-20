@@ -5,7 +5,7 @@ import type { PageSchema } from '@/types/schema'
 import { useEditorStore } from '@/stores/editor'
 
 const editorStore = useEditorStore()
-const fallbackHeroUrl = `${import.meta.env.BASE_URL}marketing/summer-hero.jpg`
+const fallbackHeroUrl = `${import.meta.env.BASE_URL}marketing/summer-hero.svg`
 const pages = computed(() => editorStore.pages)
 
 function pageThumbnail(page: PageSchema) {

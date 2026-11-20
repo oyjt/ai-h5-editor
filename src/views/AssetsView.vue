@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import PlatformHeader from '@/components/platform/PlatformHeader.vue'
 import { resolveImagesInString } from '@/design/images'
@@ -22,6 +22,7 @@ interface AssetItem {
 const keyword = ref('')
 const category = ref('图片')
 const page = ref(1)
+const PAGE_SIZE = 8
 const selectedName = ref('海岛夏日')
 const categories = ['图片', '图标', '插画', '视频', '音频', '我的上传']
 
@@ -56,6 +57,11 @@ const filtered = computed(() => {
   const list = category.value === '我的上传' ? uploaded.value : assets.value.filter(item => item.type === category.value)
   return list.filter(item => item.name.includes(keyword.value.trim()))
 })
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / PAGE_SIZE)))
+const pagedItems = computed(() => filtered.value.slice((page.value - 1) * PAGE_SIZE, page.value * PAGE_SIZE))
+watch([keyword, totalPages], () => { if (page.value > totalPages.value) page.value = totalPages.value })
+watch(keyword, () => { page.value = 1 })
 
 function displaySrc(item: AssetItem) {
   return item.src ? resolveImagesInString(item.src, settings.imageSource) : ''
@@ -124,7 +130,7 @@ function addAsset(item: AssetItem) {
 
         <div v-if="filtered.length" class="grid">
           <article
-            v-for="item in filtered"
+            v-for="item in pagedItems"
             :key="`${item.type}-${item.name}`"
             class="asset-card"
             :class="{ selected: selectedName === item.name }"
@@ -151,7 +157,7 @@ function addAsset(item: AssetItem) {
 
         <div v-else class="empty"><i class="i-tabler-photo-off" /><strong>暂无相关素材</strong><span>尝试切换分类或上传新的素材</span></div>
 
-        <div class="pagination"><span>共 124 项</span><div><button :disabled="page === 1" @click="page--"><i class="i-tabler-chevron-left" /></button><button v-for="n in 5" :key="n" :class="{ active: page === n }" @click="page = n">{{ n }}</button><em>…</em><button @click="page = 20">20</button><button :disabled="page === 20" @click="page++"><i class="i-tabler-chevron-right" /></button></div></div>
+        <div class="pagination"><span>共 {{ filtered.length }} 项</span><div><button :disabled="page === 1" aria-label="上一页" @click="page--"><i class="i-tabler-chevron-left" /></button><button v-for="n in totalPages" :key="n" :class="{ active: page === n }" @click="page = n">{{ n }}</button><button :disabled="page === totalPages" aria-label="下一页" @click="page++"><i class="i-tabler-chevron-right" /></button></div></div>
       </section>
     </main>
   </div>

@@ -30,7 +30,7 @@ export function createMarketingDemoPage(): PageSchema {
 
   page.components = [
     createFromRegistry('image', {
-      src: asset('marketing/summer-hero.jpg'),
+      src: asset('marketing/summer-hero.svg'),
       alt: '夏日焕新季',
       width: '100%',
       height: '298px',
@@ -44,8 +44,8 @@ export function createMarketingDemoPage(): PageSchema {
     }),
     createFromRegistry('coupon', {}, { margin: '0' }),
     createFromRegistry('goodsList', {
-      productOneImage: asset('marketing/product-sunscreen.jpg'),
-      productTwoImage: asset('marketing/product-headphones.jpg'),
+      productOneImage: asset('marketing/product-sunscreen.svg'),
+      productTwoImage: asset('marketing/product-headphones.svg'),
     }, { margin: '0' }),
     createFromRegistry('marketingForm', {}, { margin: '0' }),
     createFromRegistry('tabbar', {
