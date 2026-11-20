@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { resolveImagesInString } from '@/design/images'
+import { useSettingsStore } from '@/stores/settings'
+import { MAX_ASSET_SIZE, assetRef, listAssets, saveAsset } from '@/utils/asset-db'
 import { computed, nextTick, ref, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import { ElButton, ElMessage, ElMessageBox, ElTabPane, ElTabs } from 'element-plus'
@@ -87,27 +90,38 @@ function resetCrop() {
   editorStore.updateComponentProps(selectedComponent.value.id, { objectFit: 'cover', objectPosition: 'center center' })
   ElMessage.success('已重置裁切区域')
 }
-function handleImageChange(event: Event) {
-  const file = (event.target as HTMLInputElement).files?.[0]
+async function handleImageChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
   if (!file || !selectedComponent.value) return
   if (!file.type.startsWith('image/')) return ElMessage.error('请选择图片文件')
-  if (file.size > 10 * 1024 * 1024) return ElMessage.error('图片不能超过 10MB')
-  const reader = new FileReader()
-  reader.onload = () => {
-    const src = String(reader.result)
-    const image = new Image()
-    image.onload = () => { assetDimensions.value = `${image.naturalWidth} × ${image.naturalHeight}` }
-    image.src = src
+  if (file.size > MAX_ASSET_SIZE) return ElMessage.error('图片不能超过 10MB')
+  try {
+    const meta = await saveAsset(file)
     assetName.value = file.name
     assetSize.value = `${(file.size / 1024).toFixed(file.size > 1024 * 1024 ? 0 : 1)}KB`
-    editorStore.updateComponentProps(selectedComponent.value!.id, { src, alt: file.name })
-    ElMessage.success('图片已替换')
+    if (meta.width && meta.height) assetDimensions.value = `${meta.width} × ${meta.height}`
+    editorStore.updateComponentProps(selectedComponent.value.id, { src: assetRef(meta.id), alt: file.name })
+    ElMessage.success('图片已替换，并保存在本机素材库')
   }
-  reader.readAsDataURL(file)
-  ;(event.target as HTMLInputElement).value = ''
+  catch (error) {
+    console.error(error)
+    ElMessage.error('保存图片失败，浏览器可能禁用了本地存储')
+  }
 }
-function refreshAssetMeta(src: string) {
-  if (!src) return
+const settingsStore = useSettingsStore()
+const previewSrc = computed(() => resolveImagesInString(String(selectedImageSrc.value || ''), settingsStore.imageSource))
+function refreshAssetMeta(rawSrc: string) {
+  if (!rawSrc) return
+  const src = resolveImagesInString(rawSrc, settingsStore.imageSource)
+  const local = rawSrc.startsWith('asset://') ? listAssets().find(item => item.id === rawSrc.slice(8)) : undefined
+  if (local) {
+    assetName.value = local.name
+    assetSize.value = `${(local.size / 1024).toFixed(local.size > 1024 * 1024 ? 0 : 1)}KB`
+    if (local.width && local.height) assetDimensions.value = `${local.width} × ${local.height}`
+    return
+  }
   if (!src.startsWith('data:')) {
     const clean = src.split('?')[0]
     assetName.value = decodeURIComponent(clean.split('/').pop() || '图片素材')
@@ -138,7 +152,7 @@ watch(selectedComponent, async (next, prev) => {
               <section class="setting-section">
                 <button class="section-caption" @click="toggleSection('image')"><strong>图片设置</strong><i :class="sections.image ? 'i-tabler-chevron-up' : 'i-tabler-chevron-down'" /></button>
                 <div v-show="sections.image" class="section-content">
-                  <div class="asset-row"><img :src="selectedImageSrc" alt="当前图片"><div class="asset-info"><strong>{{ assetName }}</strong><span>{{ assetDimensions }} · {{ assetSize }}</span><div class="asset-actions"><button @click="chooseImage"><i class="i-tabler-replace" />更换图片</button><button @click="resetCrop"><i class="i-tabler-crop" />裁剪</button></div></div></div>
+                  <div class="asset-row"><img :src="previewSrc" alt="当前图片"><div class="asset-info"><strong>{{ assetName }}</strong><span>{{ assetDimensions }} · {{ assetSize }}</span><div class="asset-actions"><button @click="chooseImage"><i class="i-tabler-replace" />更换图片</button><button @click="resetCrop"><i class="i-tabler-crop" />裁剪</button></div></div></div>
                 </div>
               </section>
 

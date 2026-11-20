@@ -13,6 +13,7 @@ import { validatePage, violationsToPatches } from '@/design/spec-validator'
 import type { Violation } from '@/design/spec-validator'
 import { cloneSchema, findComponentById } from '@/utils/schema-generator'
 import { useEditorStore } from './editor'
+import { useSettingsStore } from './settings'
 
 export interface AgentMessage {
   id: string
@@ -54,7 +55,8 @@ export const useAgentStore = defineStore('agent', () => {
   const sessions = ref<AgentSession[]>(loadSessions())
   const activeId = ref(sessions.value[0].id)
   const mode = ref<AgentMode>('spec')
-  const provider = resolveProvider()
+  const settings = useSettingsStore()
+  const currentProvider = () => resolveProvider({ endpoint: settings.llmEndpoint, model: settings.llmModel, apiKey: settings.llmApiKey })
   const lastCheckAt = ref(0)
   const pageRevision = ref(0)
 
@@ -136,7 +138,7 @@ export const useAgentStore = defineStore('agent', () => {
     const target = session.messages[session.messages.length - 1]
 
     try {
-      const plan = await provider.plan(text, context)
+      const plan = await currentProvider().plan(text, context)
       target.steps = plan.steps.map(label => ({ label, done: false }))
       for (const step of target.steps) {
         await new Promise(resolve => setTimeout(resolve, 180))
@@ -190,5 +192,5 @@ export const useAgentStore = defineStore('agent', () => {
     return fixed
   }
 
-  return { sessions, activeId, active, mode, providerName: provider.name, violations, lastCheckAt, hasRunning, newSession, switchSession, setMode, send, autofixViolations, refreshCheck }
+  return { sessions, activeId, active, mode, providerName: computed(() => currentProvider().name), violations, lastCheckAt, hasRunning, newSession, switchSession, setMode, send, autofixViolations, refreshCheck }
 })

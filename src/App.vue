@@ -1,10 +1,11 @@
 <script setup lang="ts">
-// 根组件
+import SettingsDialog from '@/components/dialogs/SettingsDialog.vue'
 </script>
 
 <template>
   <div id="app">
     <RouterView />
+    <SettingsDialog />
   </div>
 </template>
 

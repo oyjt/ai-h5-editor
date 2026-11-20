@@ -1,8 +1,8 @@
 /**
  * Agent Provider
- * 默认使用本地规划器；配置了 VITE_LLM_ENDPOINT 后改走内部模型网关（OpenAI 兼容协议），
+ * 默认使用本地规划器；配置了 VITE_LLM_ENDPOINT 后改走用户配置的模型服务（OpenAI 兼容协议），
  * 网关返回不合法或请求失败时回落到本地规划器。
- * 内部工具场景下密钥应由网关持有，前端不写 Key。
+ * 优先使用设置面板中用户自带的模型 Key（仅存浏览器 localStorage）；未配置则读取 VITE_LLM_*，再否则用本地规划器。
  */
 
 import { z } from 'zod'
@@ -71,8 +71,11 @@ export function createRemoteProvider(endpoint: string, model: string, apiKey?: s
   }
 }
 
-export function resolveProvider(): AgentProvider {
-  const endpoint = import.meta.env.VITE_LLM_ENDPOINT as string | undefined
+/** 设置里填写的模型服务优先，其次是构建时的环境变量，都没有则用本地规划器 */
+export function resolveProvider(custom?: { endpoint?: string, model?: string, apiKey?: string }): AgentProvider {
+  const endpoint = custom?.endpoint || (import.meta.env.VITE_LLM_ENDPOINT as string | undefined)
   if (!endpoint) return localProvider
-  return createRemoteProvider(endpoint, (import.meta.env.VITE_LLM_MODEL as string) || 'default', import.meta.env.VITE_LLM_API_KEY as string | undefined)
+  const model = custom?.model || (import.meta.env.VITE_LLM_MODEL as string) || 'default'
+  const apiKey = custom?.apiKey || (import.meta.env.VITE_LLM_API_KEY as string | undefined)
+  return createRemoteProvider(endpoint, model, apiKey)
 }

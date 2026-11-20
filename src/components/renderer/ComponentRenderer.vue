@@ -3,15 +3,18 @@ import { computed } from 'vue'
 import type { ComponentSchema } from '@/types/schema'
 import { getComponentConfig } from '@/config/component-registry'
 import { resolveTokensDeep } from '@/design/tokens'
+import { resolveImagesDeep } from '@/design/images'
 import { useEditorStore } from '@/stores/editor'
+import { useSettingsStore } from '@/stores/settings'
 
 interface Props { schema: ComponentSchema; isEditing?: boolean; selectedId?: string | null; hoveredId?: string | null }
 const props = withDefaults(defineProps<Props>(), { isEditing:false, selectedId:null, hoveredId:null })
 const emit = defineEmits<{ select:[id:string]; hover:[id:string|null] }>()
 const componentConfig=computed(()=>getComponentConfig(props.schema.type))
-const mergedStyles=computed(()=>resolveTokensDeep({ ...props.schema.styles }))
-const resolvedProps=computed(()=>resolveTokensDeep(props.schema.props))
+const mergedStyles=computed(()=>resolveImagesDeep(resolveTokensDeep({ ...props.schema.styles }),settings.imageSource))
+const resolvedProps=computed(()=>resolveImagesDeep(resolveTokensDeep(props.schema.props),settings.imageSource))
 const editorStore=useEditorStore()
+const settings=useSettingsStore()
 const isAgentSelected=computed(()=>props.isEditing&&editorStore.agentSelectionIds.includes(props.schema.id))
 const isSelected=computed(()=>props.isEditing&&props.selectedId===props.schema.id)
 const isHovered=computed(()=>props.isEditing&&props.hoveredId===props.schema.id&&!isSelected.value)

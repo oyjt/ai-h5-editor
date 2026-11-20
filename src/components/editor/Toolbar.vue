@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { ElTooltip } from 'element-plus'
+import { useSettingsStore } from '@/stores/settings'
 
 const router = useRouter()
+const settings = useSettingsStore()
 
 const navItems = [
   { label: '工作台', icon: 'i-tabler-home', path: '/workspace' },
@@ -31,9 +33,7 @@ const navItems = [
       <ElTooltip content="帮助中心"><button class="header-icon"><i class="i-tabler-help-circle" /></button></ElTooltip>
       <button class="header-icon notice"><i class="i-tabler-bell" /><em /></button>
       <span class="header-divider" />
-      <div class="avatar">管</div>
-      <div class="user-copy"><strong>管理员</strong><span>企业版</span></div>
-      <button class="user-entry" title="账户" @click="router.push('/login')"><i class="i-tabler-chevron-down user-chevron" /></button>
+      <ElTooltip content="设置"><button class="header-icon" aria-label="设置" @click="settings.openDialog()"><i class="i-tabler-settings" /></button></ElTooltip>
     </div>
   </header>
 </template>

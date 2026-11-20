@@ -2,6 +2,12 @@
 import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import PlatformHeader from '@/components/platform/PlatformHeader.vue'
+import { resolveImagesInString } from '@/design/images'
+import { getComponentConfig } from '@/config/component-registry'
+import { useEditorStore } from '@/stores/editor'
+import { useSettingsStore } from '@/stores/settings'
+import { createComponentSchema } from '@/utils/schema-generator'
+import { MAX_ASSET_SIZE, assetRef, deleteAsset, listAssets, saveAsset } from '@/utils/asset-db'
 
 interface AssetItem {
   name: string
@@ -10,6 +16,7 @@ interface AssetItem {
   src?: string
   icon?: string
   theme?: string
+  assetId?: string
 }
 
 const keyword = ref('')
@@ -33,13 +40,49 @@ const assets = ref<AssetItem[]>([
   { name: '轻快背景音乐', type: '音频', size: '3.6 MB', icon: 'i-tabler-music', theme: 'blue' },
 ])
 
-const filtered = computed(() => assets.value.filter((item) => {
-  const matchType = category.value === '我的上传' ? true : item.type === category.value
-  return matchType && item.name.includes(keyword.value.trim())
-}))
+const settings = useSettingsStore()
+const editorStore = useEditorStore()
+const fileInput = ref<HTMLInputElement | null>(null)
+
+const uploaded = computed<AssetItem[]>(() => listAssets().map(item => ({
+  name: item.name,
+  type: '我的上传',
+  size: `${(item.size / 1024).toFixed(item.size > 1024 * 1024 ? 0 : 1)} KB`,
+  src: item.url,
+  assetId: item.id,
+})))
+
+const filtered = computed(() => {
+  const list = category.value === '我的上传' ? uploaded.value : assets.value.filter(item => item.type === category.value)
+  return list.filter(item => item.name.includes(keyword.value.trim()))
+})
+
+function displaySrc(item: AssetItem) {
+  return item.src ? resolveImagesInString(item.src, settings.imageSource) : ''
+}
 
 function upload() {
-  ElMessage.success('已添加到素材库（演示）')
+  fileInput.value?.click()
+}
+
+async function onFiles(event: Event) {
+  const input = event.target as HTMLInputElement
+  const files = [...(input.files ?? [])]
+  input.value = ''
+  let saved = 0
+  for (const file of files) {
+    if (!file.type.startsWith('image/')) { ElMessage.warning(`${file.name} 不是图片，已跳过`); continue }
+    if (file.size > MAX_ASSET_SIZE) { ElMessage.warning(`${file.name} 超过 10MB，已跳过`); continue }
+    try { await saveAsset(file); saved++ }
+    catch (error) { console.error(error); ElMessage.error(`${file.name} 保存失败，浏览器可能禁用了本地存储`) }
+  }
+  if (saved) { category.value = '我的上传'; ElMessage.success(`已保存 ${saved} 张图片到本机素材库`) }
+}
+
+async function removeAsset(item: AssetItem) {
+  if (!item.assetId) return
+  await deleteAsset(item.assetId)
+  ElMessage.success('已从本机素材库删除')
 }
 
 function selectAsset(item: AssetItem) {
@@ -51,6 +94,12 @@ function previewAsset(item: AssetItem) {
 }
 
 function addAsset(item: AssetItem) {
+  if (!item.src) return ElMessage.info('该类型素材暂不支持直接添加到页面')
+  const config = getComponentConfig('image')
+  if (!config) return
+  const src = item.assetId ? assetRef(item.assetId) : item.src
+  editorStore.addComponent(createComponentSchema('image', { ...config.defaultProps, src, alt: item.name }, { ...config.defaultStyles }))
+  editorStore.savePage()
   ElMessage.success(`已添加到当前页面：${item.name}`)
 }
 </script>
@@ -62,6 +111,7 @@ function addAsset(item: AssetItem) {
       <div class="page-head">
         <div><h1>素材管理</h1><p>统一管理 H5 页面使用的图片、图标、插画、视频与音频资源</p></div>
         <button class="primary" @click="upload"><i class="i-tabler-upload" /> 上传素材</button>
+        <input ref="fileInput" class="hidden-file" type="file" accept="image/*" multiple @change="onFiles">
       </div>
 
       <section class="panel">
@@ -81,7 +131,7 @@ function addAsset(item: AssetItem) {
             @click="selectAsset(item)"
           >
             <div class="preview" :class="item.theme">
-              <img v-if="item.src" :src="item.src" :alt="item.name" loading="lazy">
+              <img v-if="item.src" :src="displaySrc(item)" :alt="item.name" loading="lazy">
               <i v-else :class="item.icon" class="type-icon" />
 
               <span v-if="selectedName === item.name" class="asset-check"><i class="i-tabler-check" /></span>
@@ -89,13 +139,14 @@ function addAsset(item: AssetItem) {
               <div class="hover-actions" @click.stop>
                 <button type="button" title="预览素材" aria-label="预览素材" @click="previewAsset(item)"><i class="i-tabler-eye" /></button>
                 <button type="button" title="添加到页面" aria-label="添加到页面" @click="addAsset(item)"><i class="i-tabler-plus" /></button>
+                <button v-if="item.assetId" type="button" title="删除" aria-label="删除" @click="removeAsset(item)"><i class="i-tabler-trash" /></button>
               </div>
             </div>
             <div class="meta"><strong>{{ item.name }}</strong><span>{{ item.type }} · {{ item.size }}</span></div>
             <button class="more" aria-label="更多操作" @click.stop>•••</button>
           </article>
 
-          <button class="upload-card" @click="upload"><i class="i-tabler-cloud-upload" /><strong>上传新素材</strong><span>支持 JPG、PNG、SVG、MP4、MP3</span></button>
+          <button class="upload-card" @click="upload"><i class="i-tabler-cloud-upload" /><strong>上传新素材</strong><span>支持 JPG、PNG、SVG、GIF、WebP，保存在本机</span></button>
         </div>
 
         <div v-else class="empty"><i class="i-tabler-photo-off" /><strong>暂无相关素材</strong><span>尝试切换分类或上传新的素材</span></div>
@@ -108,4 +159,5 @@ function addAsset(item: AssetItem) {
 
 <style scoped>
 .shell{min-height:100%;background:var(--surface-0)}.page{max-width:1380px;margin:auto;padding:24px 28px 44px}.page-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}.page-head h1{font-size:22px;margin:0 0 5px;color:var(--text-strong)}.page-head p{margin:0;color:var(--text-muted);font-size:var(--font-size-md)}.primary{height:36px;border:0;border-radius:var(--radius-md);background:var(--brand-600);color:#fff;padding:0 14px;box-shadow:var(--shadow-brand);cursor:pointer;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600}.primary:hover{background:var(--brand-500)}.panel{background:var(--surface-1);border:1px solid var(--border-subtle);border-radius:var(--radius-xl);padding:0 18px 16px;box-shadow:var(--shadow-xs)}.toolbar{min-height:58px;border-bottom:1px solid var(--border-subtle);display:flex;justify-content:space-between;align-items:center;gap:20px}.tabs{display:flex;align-self:stretch;gap:20px;min-width:0}.tabs button{height:58px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--text-secondary);font-size:12px;cursor:pointer;padding:0 2px}.tabs button:hover{color:var(--brand-600)}.tabs button.active{border-bottom-color:var(--brand-600);color:var(--brand-600);font-weight:600}.search{width:244px;min-width:200px;height:34px;display:flex;align-items:center;padding:0 10px;color:var(--text-muted);flex:0 0 244px}.search input{width:100%;margin-left:6px;font-size:12px!important;line-height:1.4!important}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:16px 0}.asset-card,.upload-card{border:1px solid var(--border-subtle);border-radius:var(--radius-lg);overflow:hidden;background:var(--surface-1);position:relative;transition:border-color var(--motion-base) var(--ease-standard),box-shadow var(--motion-base) var(--ease-standard),transform var(--motion-base) var(--ease-standard)}.asset-card{cursor:pointer}.asset-card:hover{transform:translateY(-2px);border-color:var(--border-brand);box-shadow:var(--shadow-sm)}.asset-card.selected{border-color:var(--brand-400);box-shadow:0 0 0 1px var(--brand-100)}.preview{height:148px;position:relative;display:grid;place-items:center;font-size:32px;color:#fff;overflow:hidden;background:var(--surface-3)}.preview img{width:100%;height:100%;display:block;object-fit:cover;transition:transform var(--motion-slow) var(--ease-standard)}.asset-card:hover .preview img{transform:scale(1.025)}.preview.violet{background:linear-gradient(145deg,#7d6cf0,#c7bcff)}.preview.pink{background:linear-gradient(145deg,#ff92b6,#ffd2a8)}.preview.orange{background:linear-gradient(145deg,#ff8774,#ffcab0)}.preview.blue{background:linear-gradient(145deg,#5c7dff,#a7b7ff)}.type-icon{font-size:34px;line-height:1}.asset-check{position:absolute;right:8px;top:8px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--brand-600);border:2px solid rgba(255,255,255,.96);font-size:11px;z-index:4;box-shadow:0 2px 8px rgba(23,105,255,.22)}.asset-check i{font-size:11px;line-height:1}.hover-actions{position:absolute;inset:0;background:rgba(24,39,62,.30);display:flex;align-items:center;justify-content:center;gap:8px;opacity:0;pointer-events:none;transition:opacity var(--motion-base) var(--ease-standard);z-index:3}.asset-card:hover .hover-actions{opacity:1;pointer-events:auto}.hover-actions button{width:36px;height:36px;padding:0;border:1px solid rgba(255,255,255,.78);border-radius:var(--radius-md);background:rgba(255,255,255,.96);color:var(--brand-600);cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 5px 14px rgba(24,39,62,.14);transition:transform var(--motion-fast),background-color var(--motion-fast),color var(--motion-fast)}.hover-actions button:hover{background:#fff;color:var(--brand-700);transform:translateY(-1px)}.hover-actions button i{font-size:18px;line-height:1;display:block}.meta{padding:11px 12px;display:flex;flex-direction:column;min-height:54px}.meta strong{font-size:12px;color:var(--text-primary);font-weight:600;line-height:1.35}.meta span{font-size:10px;color:var(--text-muted);margin-top:4px}.more{position:absolute;right:8px;bottom:12px;border:0;background:transparent;color:var(--text-muted);cursor:pointer;width:28px;height:28px;border-radius:var(--radius-sm);line-height:1}.more:hover{background:var(--surface-3);color:var(--text-secondary)}.upload-card{min-height:202px;border-style:dashed;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-muted);cursor:pointer}.upload-card:hover{background:var(--brand-50);border-color:var(--border-brand)}.upload-card i{font-size:29px;color:var(--brand-600)}.upload-card strong{margin-top:8px;font-size:12px;color:var(--text-secondary)}.upload-card span{font-size:10px;margin-top:4px}.empty{height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-muted)}.empty i{font-size:36px;color:var(--brand-300)}.empty strong{margin-top:9px;color:var(--text-secondary);font-size:13px}.empty span{font-size:10px;margin-top:4px}.pagination{padding-top:13px;border-top:1px solid var(--border-subtle);display:flex;align-items:center;justify-content:space-between;color:var(--text-muted);font-size:10px}.pagination>div{display:flex;gap:5px;align-items:center}.pagination button{min-width:30px;height:30px;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-1);color:var(--text-secondary);cursor:pointer}.pagination button:hover:not(:disabled),.pagination button.active{border-color:var(--border-brand);background:var(--brand-50);color:var(--brand-600)}.pagination button:disabled{opacity:.35;cursor:not-allowed}.pagination em{font-style:normal;padding:0 3px}@media(max-width:1180px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.tabs{gap:14px}.search{width:220px;flex-basis:220px}}@media(max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.toolbar{align-items:flex-start;gap:12px;flex-direction:column;padding:12px 0}.tabs{width:100%;overflow:auto}.tabs button{height:38px;white-space:nowrap}.search{width:100%;min-width:0;flex-basis:auto}.page{padding:22px 20px}}
+.hidden-file{display:none}
 </style>

@@ -1,5 +1,6 @@
 import type { PageSchema } from '@/types/schema'
 import { resolveTokensDeep } from '@/design/tokens'
+import { ASSET_PREFIX, blobToDataUrl, getAssetBlob } from '@/utils/asset-db'
 
 export function exportAsJSON(schema: PageSchema): string {
   return JSON.stringify(schema, null, 2)
@@ -15,8 +16,34 @@ function triggerDownload(content: BlobPart, type: string, filename: string) {
   URL.revokeObjectURL(url)
 }
 
-export function downloadJSON(schema: PageSchema, filename = 'page.json') {
-  triggerDownload(exportAsJSON(schema), 'application/json', filename)
+/** 把 asset:// 引用内联为 data URL，使导出文件脱离本机 IndexedDB 也能独立打开 */
+export async function inlineAssets(schema: PageSchema): Promise<PageSchema> {
+  const cache = new Map<string, string>()
+  const walk = async (value: any): Promise<any> => {
+    if (typeof value === 'string' && value.includes(ASSET_PREFIX)) {
+      const matches = [...new Set(value.match(/asset:\/\/[\w-]+/g) ?? [])]
+      let out = value
+      for (const ref of matches) {
+        if (!cache.has(ref)) {
+          const blob = await getAssetBlob(ref.slice(ASSET_PREFIX.length))
+          cache.set(ref, blob ? await blobToDataUrl(blob) : '')
+        }
+        out = out.split(ref).join(cache.get(ref)!)
+      }
+      return out
+    }
+    if (Array.isArray(value)) return Promise.all(value.map(walk))
+    if (value && typeof value === 'object') {
+      const entries = await Promise.all(Object.entries(value).map(async ([k, v]) => [k, await walk(v)] as const))
+      return Object.fromEntries(entries)
+    }
+    return value
+  }
+  return walk(schema)
+}
+
+export async function downloadJSON(schema: PageSchema, filename = 'page.json') {
+  triggerDownload(exportAsJSON(await inlineAssets(schema)), 'application/json', filename)
 }
 
 function toStyleString(styles: Record<string, unknown> = {}) {
@@ -73,8 +100,8 @@ export function exportAsHTML(schema: PageSchema): string {
 </html>`
 }
 
-export function downloadHTML(schema: PageSchema, filename = 'page.html') {
-  triggerDownload(exportAsHTML(schema), 'text/html;charset=utf-8', filename)
+export async function downloadHTML(schema: PageSchema, filename = 'page.html') {
+  triggerDownload(exportAsHTML(await inlineAssets(schema)), 'text/html;charset=utf-8', filename)
 }
 
 export function generatePreviewURL(schema: PageSchema): string {
