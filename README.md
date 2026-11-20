@@ -83,6 +83,13 @@
 - **Design Token**：`tokens/ant-design.tokens.json` 经 Style Dictionary（`pnpm tokens`，dev/build 自动执行）生成 CSS 变量、UnoCSS 主题色（`bg-ud-primary`）与 `src/design/tokens.generated.ts`。Schema 里的值可写 `{color.primary}`，预览解析为 CSS 变量，导出 HTML 时解析为具体值。
 - **规范校验**：`src/design/spec-validator.ts` 检查颜色、4px 间距栅格、圆角与字号刻度，AI 面板底部可查看并一键修正。
 
+## ud-design 阶段 2（按原型：快速发起、风格库、设计转代码）
+
+- **快速发起**：任意页面按 `Cmd/Ctrl + K` 唤起，描述需求后「开始生成」会新建会话并跳到编辑器执行；弹层里可看到最近任务的进度。生成期间顶部出现**任务悬浮岛**，点击回到对应会话。
+- **风格库**（`/styles`）：内置 Ant Design，可新建自己的风格库。「二次蒸馏」扫描项目所有页面里未登记的颜色 / 圆角 / 字号，逐项**采纳或驳回**，全部确认后发布新版本（如 v5.0 → v5.1）；采纳的取值写入风格库，规范校验随之放行。数据存浏览器 localStorage。
+- **设计转代码**（`/handoff`）：选择页面，生成 **Vue 单文件组件 / CSS / Design DSL**，可复制或下载；Token 在 CSS 中保留为 `var(--ud-*)`。走查清单显示偏离数、硬编码颜色数与 Token 引用数。
+- 暂未做：MCP 服务（需要后端）、真机扫码走查、多画板连续画布。
+
 ## 技术栈
 
 - Vue 3

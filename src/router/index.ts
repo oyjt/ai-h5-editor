@@ -8,6 +8,8 @@ const router = createRouter({
     { path: '/templates', name: 'templates', component: () => import('@/views/TemplateView.vue') },
     { path: '/projects', name: 'projects', component: () => import('@/views/ProjectsView.vue') },
     { path: '/assets', name: 'assets', component: () => import('@/views/AssetsView.vue') },
+    { path: '/styles', name: 'styles', component: () => import('@/views/StyleLibraryView.vue') },
+    { path: '/handoff', name: 'handoff', component: () => import('@/views/HandoffView.vue') },
     { path: '/preview', name: 'preview', component: () => import('@/views/PreviewView.vue') },
     { path: '/:pathMatch(.*)*', redirect: '/workspace' },
   ],

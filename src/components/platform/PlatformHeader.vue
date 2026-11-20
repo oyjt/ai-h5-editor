@@ -3,16 +3,20 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElTooltip } from 'element-plus'
 import { useSettingsStore } from '@/stores/settings'
+import { useUiStore } from '@/stores/ui'
 
 const route = useRoute()
 const router = useRouter()
 const settings = useSettingsStore()
+const ui = useUiStore()
 
 const navItems = [
   { label: '工作台', icon: 'i-tabler-home', path: '/workspace' },
   { label: '模板中心', icon: 'i-tabler-template', path: '/templates' },
   { label: '我的作品', icon: 'i-tabler-folder', path: '/projects' },
   { label: '素材管理', icon: 'i-tabler-photo', path: '/assets' },
+  { label: '风格库', icon: 'i-tabler-palette', path: '/styles' },
+  { label: '设计转代码', icon: 'i-tabler-code', path: '/handoff' },
 ]
 
 const activePath = computed(() => route.path)
@@ -42,7 +46,7 @@ const activePath = computed(() => route.path)
     <div class="header-right">
       <label class="global-search ds-search-field">
         <i class="i-tabler-search" />
-        <input placeholder="搜索模板、作品或素材...">
+        <input placeholder="搜索，或按 ⌘K 发起设计" readonly @focus="ui.toggleLauncher(true)">
         <kbd>⌘ K</kbd>
       </label>
 

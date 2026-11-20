@@ -9,6 +9,7 @@
 
 import type { ComponentSchema, PageSchema } from '@/types/schema'
 import {
+  getExtraAllowed,
   getTokensByGroup,
   isTokenRef,
   nearestColorToken,
@@ -53,7 +54,7 @@ function pxValues(value: string) {
 
 function checkColor(value: string): { suggestion: string, label: string } | null {
   const hex = normalizeHex(value)
-  if (!hex || colorValues.has(hex)) return null
+  if (!hex || colorValues.has(hex) || getExtraAllowed().color.has(hex)) return null
   const near = nearestColorToken(hex)
   if (!near) return null
   return { suggestion: tokenRef(near.token.path), label: near.token.path }
@@ -69,9 +70,9 @@ function checkSpacing(value: string): string | null {
   return value.replace(/(-?\d+(?:\.\d+)?)px/g, (_, num: string) => `${snapToGrid(Number.parseFloat(num))}px`)
 }
 
-function checkScale(group: 'radius' | 'font-size', value: string, allowed: Set<number>): { suggestion: string, label: string } | null {
+function checkScale(group: 'radius' | 'font-size', value: string, allowed: Set<number>, extra: Set<number>): { suggestion: string, label: string } | null {
   const values = pxValues(value)
-  if (values.length !== 1 || allowed.has(values[0]) || values[0] === 0) return null
+  if (values.length !== 1 || allowed.has(values[0]) || extra.has(values[0]) || values[0] === 0) return null
   const token = nearestDimensionToken(group, values[0])
   return token ? { suggestion: tokenRef(token.path), label: token.path } : null
 }
@@ -94,12 +95,12 @@ function inspect(component: ComponentSchema, field: 'styles' | 'props', record: 
       continue
     }
     if (RADIUS_KEYS.test(key)) {
-      const hit = checkScale('radius', raw, radiusValues)
+      const hit = checkScale('radius', raw, radiusValues, getExtraAllowed().radius)
       if (hit) out.push({ ...base, id, rule: 'radius-off-scale', suggestion: hit.suggestion, message: `${key} 的 ${raw} 不在圆角刻度上，建议改为 ${hit.label}` })
       continue
     }
     if (FONT_SIZE_KEYS.test(key)) {
-      const hit = checkScale('font-size', raw, fontSizeValues)
+      const hit = checkScale('font-size', raw, fontSizeValues, getExtraAllowed().fontSize)
       if (hit) out.push({ ...base, id, rule: 'font-size-off-scale', suggestion: hit.suggestion, message: `fontSize 的 ${raw} 不在字号刻度上，建议改为 ${hit.label}` })
     }
   }

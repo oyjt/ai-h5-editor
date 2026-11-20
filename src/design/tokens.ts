@@ -90,3 +90,23 @@ export function nearestDimensionToken(group: 'space' | 'radius' | 'font-size', p
   }
   return best?.token ?? null
 }
+
+/**
+ * 风格库里额外登记（采纳）的取值：不属于内置 Token，但校验器视为合规。
+ * 由风格库 store 在切换或发布风格库后同步。
+ */
+const extraAllowed = {
+  color: new Set<string>(),
+  radius: new Set<number>(),
+  fontSize: new Set<number>(),
+}
+
+export function setExtraAllowed(next: { color?: string[], radius?: number[], fontSize?: number[] }) {
+  extraAllowed.color = new Set((next.color ?? []).map(value => normalizeHex(value)).filter((v): v is string => !!v))
+  extraAllowed.radius = new Set(next.radius ?? [])
+  extraAllowed.fontSize = new Set(next.fontSize ?? [])
+}
+
+export function getExtraAllowed() {
+  return extraAllowed
+}
