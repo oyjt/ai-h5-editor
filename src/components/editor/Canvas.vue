@@ -6,6 +6,52 @@ import PageRenderer from '@/components/renderer/PageRenderer.vue'
 import { getAllComponents } from '@/config/component-registry'
 import { createComponentSchema } from '@/utils/schema-generator'
 
+const shellRef = ref<HTMLElement | null>(null)
+const marqueeOn = ref(false)
+const marquee = ref<{ x0: number, y0: number, x1: number, y1: number } | null>(null)
+const marqueeBox = computed(() => {
+  const m = marquee.value
+  if (!m) return null
+  return { left: `${Math.min(m.x0, m.x1)}px`, top: `${Math.min(m.y0, m.y1)}px`, width: `${Math.abs(m.x1 - m.x0)}px`, height: `${Math.abs(m.y1 - m.y0)}px` }
+})
+function localPoint(e: PointerEvent) {
+  const rect = shellRef.value!.getBoundingClientRect()
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top }
+}
+function onMarqueeDown(e: PointerEvent) {
+  const p = localPoint(e)
+  marquee.value = { x0: p.x, y0: p.y, x1: p.x, y1: p.y };
+  (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+}
+function onMarqueeMove(e: PointerEvent) {
+  if (!marquee.value) return
+  const p = localPoint(e)
+  marquee.value = { ...marquee.value, x1: p.x, y1: p.y }
+}
+function onMarqueeUp() {
+  const m = marquee.value
+  marquee.value = null
+  if (!m || !shellRef.value) return
+  const origin = shellRef.value.getBoundingClientRect()
+  const left = origin.left + Math.min(m.x0, m.x1)
+  const right = origin.left + Math.max(m.x0, m.x1)
+  const top = origin.top + Math.min(m.y0, m.y1)
+  const bottom = origin.top + Math.max(m.y0, m.y1)
+  const ids = editorStore.currentPage.components.filter((item) => {
+    const el = shellRef.value!.querySelector(`[data-component-id="${item.id}"]`)
+    if (!el) return false
+    const r = el.getBoundingClientRect()
+    return r.left < right && r.right > left && r.top < bottom && r.bottom > top
+  }).map(item => item.id)
+  editorStore.setAgentSelection(ids)
+  if (ids.length) ElMessage.success(`已框选 ${ids.length} 个组件，到 AI 面板说怎么改`)
+  marqueeOn.value = false
+}
+function toggleMarquee() {
+  marqueeOn.value = !marqueeOn.value
+  if (!marqueeOn.value) marquee.value = null
+}
+
 const editorStore = useEditorStore()
 const isDragOver = ref(false)
 const selectedComponent = computed(() => editorStore.selectedComponent)
@@ -60,9 +106,14 @@ function handleDelete() {
 </script>
 
 <template>
-  <div class="canvas-shell">
+  <div ref="shellRef" class="canvas-shell">
     <div class="ruler ruler-x"><span v-for="n in 13" :key="n">{{ (n - 1) * 100 }}</span></div>
     <div class="ruler ruler-y"><span v-for="n in 10" :key="n">{{ (n - 1) * 100 }}</span></div>
+
+    <button class="marquee-toggle" :class="{ active: marqueeOn }" :aria-pressed="marqueeOn" title="框选组件后交给 AI 修改" @click="toggleMarquee"><i class="i-tabler-focus-2" /><span>框选改图</span></button>
+    <div v-if="marqueeOn" class="marquee-layer" @pointerdown="onMarqueeDown" @pointermove="onMarqueeMove" @pointerup="onMarqueeUp">
+      <div v-if="marqueeBox" class="marquee-box" :style="marqueeBox" />
+    </div>
 
     <div class="canvas-stage">
       <div class="preview-group">
@@ -100,4 +151,5 @@ function handleDelete() {
 
 <style scoped>
 .canvas-shell{flex:1;min-width:0;height:100%;position:relative;overflow:hidden;background:#f4f7fb;background-image:radial-gradient(circle,rgba(123,145,173,.14) 1px,transparent 1px);background-size:18px 18px}[data-theme='dark'] .canvas-shell{background-color:#20242b}.ruler{position:absolute;z-index:4;color:#a7b3c3;font-size:9px;pointer-events:none;background:rgba(248,250,253,.92);backdrop-filter:blur(8px)}.ruler-x{left:24px;right:0;top:0;height:24px;border-bottom:1px solid #e7edf4;display:flex;justify-content:space-around;align-items:center}.ruler-y{left:0;top:24px;bottom:0;width:24px;border-right:1px solid #e7edf4;display:flex;flex-direction:column;justify-content:space-around;align-items:center}.canvas-stage{position:absolute;inset:24px 0 0 24px;display:flex;align-items:center;justify-content:center;padding:18px 42px 26px;overflow:auto}.preview-group{display:flex;align-items:center;justify-content:center;gap:14px;min-width:max-content}.preview-viewport{display:flex;align-items:center;justify-content:center;flex:0 0 auto;transition:width .18s ease,height .18s ease}.phone-wrap{position:relative;display:flex;align-items:center;justify-content:center;transform:scale(var(--preview-scale));transform-origin:center center;transition:transform .18s ease}.phone-shadow{position:absolute;left:50%;bottom:-20px;width:320px;height:35px;transform:translateX(-50%);border-radius:50%;background:rgba(42,52,66,.18);filter:blur(20px)}.device-frame{width:var(--device-width);height:var(--device-height);padding:8px;border-radius:49px;background:linear-gradient(145deg,#121417 0%,#2a2d32 45%,#08090b 100%);box-shadow:0 28px 60px rgba(36,48,66,.28),0 0 0 1px #08090b,inset 0 0 0 1px rgba(255,255,255,.12);position:relative;transition:.18s ease}.device-frame::before,.device-frame::after{content:'';position:absolute;left:-3px;width:3px;background:#191b1f;border-radius:3px 0 0 3px}.device-frame::before{top:168px;height:63px}.device-frame::after{top:246px;height:43px}.device-frame.tablet{border-radius:31px;padding:7px;background:linear-gradient(145deg,#202328,#050607)}.device-frame.tablet::before,.device-frame.tablet::after{display:none}.device-frame.drag-over{box-shadow:0 0 0 4px rgba(23,105,255,.18),0 24px 58px rgba(23,105,255,.28)}.device-screen{width:100%;height:100%;overflow:hidden;border-radius:41px;background:#fff;position:relative;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}.device-frame.tablet .device-screen{border-radius:24px}.notch{position:absolute;z-index:46;top:0;left:50%;transform:translateX(-50%);width:154px;height:29px;border-radius:0 0 18px 18px;background:#08090b;display:flex;align-items:center;justify-content:center;gap:9px;pointer-events:none}.speaker{width:48px;height:4px;border-radius:4px;background:#25282d}.camera{width:7px;height:7px;border-radius:50%;background:#101722;box-shadow:inset 0 0 0 2px #1c2736}.status-bar{position:absolute;left:0;right:0;top:0;height:39px;padding:11px 19px 0;display:flex;align-items:flex-start;justify-content:space-between;color:#17344c;font-size:10px;z-index:45;pointer-events:none;text-shadow:0 1px 1px rgba(255,255,255,.52)}.status-bar strong{padding-left:4px}.status-bar span{display:flex;gap:3px;align-items:center;font-size:12px}.status-bar.tablet{padding-left:22px;padding-right:22px}.page-content{width:100%;height:100%;overflow:auto;background:#fff;scrollbar-width:none}.page-content::-webkit-scrollbar{width:0;height:0}.drop-mask{position:absolute;inset:10px;z-index:48;border:2px dashed #3988ff;border-radius:32px;background:rgba(239,246,255,.9);backdrop-filter:blur(3px);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#1769ff;pointer-events:none}.drop-mask i{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:#1769ff;color:#fff;font-size:24px;box-shadow:0 8px 20px rgba(23,105,255,.22)}.drop-mask strong{font-size:13px;margin-top:12px}.drop-mask span{font-size:9px;color:#7192bd;margin-top:5px}.device-tools{width:48px;flex:0 0 48px;background:#fff;border:1px solid #e2e9f1;border-radius:9px;box-shadow:0 8px 24px rgba(45,66,94,.12);overflow:hidden;transition:opacity .12s ease,transform .12s ease}.device-tools.hidden{opacity:0;pointer-events:none;transform:translateX(-6px)}.device-tools button{width:48px;height:58px;border:0;border-bottom:1px solid #edf1f6;background:#fff;color:#65758a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:9px;cursor:pointer;transition:.12s ease}.device-tools button:last-child{border-bottom:0}.device-tools button:hover:not(:disabled){background:#f3f7ff;color:#1769ff}.device-tools button.danger:hover{background:#fff4f4;color:#ef4444}.device-tools button:disabled{color:#c5ccd6;background:#fbfcfd;cursor:not-allowed}.device-tools i{font-size:16px}.device-tools span{line-height:1}@media(max-height:930px){.canvas-stage{align-items:flex-start;padding-top:14px}.phone-wrap{transform:scale(calc(var(--preview-scale) * .9));transform-origin:top center}.device-tools{margin-top:64px}}@media(max-width:1500px){.canvas-stage{padding-left:26px;padding-right:26px}.preview-group{gap:10px}.device-tools{width:44px;flex-basis:44px}.device-tools button{width:44px;height:52px}.device-frame{border-radius:45px}}@media(max-width:1320px){.canvas-stage{justify-content:flex-start;padding-left:18px}.phone-wrap{transform:scale(calc(var(--preview-scale) * .86));transform-origin:left center}.preview-viewport{width:calc(var(--device-width) * var(--preview-scale) * .86)!important}}
+.marquee-toggle{position:absolute;right:16px;top:16px;z-index:20;height:32px;padding:0 12px;border:1px solid var(--border-default);border-radius:var(--radius-md);background:var(--surface-1);color:var(--text-secondary);display:flex;align-items:center;gap:6px;font-size:var(--font-size-sm);cursor:pointer;box-shadow:var(--shadow-xs)}.marquee-toggle:hover{color:var(--brand-600);border-color:var(--border-brand)}.marquee-toggle.active{background:var(--brand-600);border-color:var(--brand-600);color:var(--text-inverse)}.marquee-layer{position:absolute;inset:0;z-index:15;cursor:crosshair;touch-action:none}.marquee-box{position:absolute;border:1px dashed var(--brand-600);background:rgba(23,105,255,.1);pointer-events:none}
 </style>

@@ -6,10 +6,11 @@ import { getAllComponents } from '@/config/component-registry'
 import { useEditorStore } from '@/stores/editor'
 import { useTemplatesStore } from '@/stores/templates'
 import { createComponentSchema } from '@/utils/schema-generator'
+import AgentPanel from '@/components/agent/AgentPanel.vue'
 
 const editorStore = useEditorStore()
 const templatesStore = useTemplatesStore()
-const activeRail = ref<'components' | 'pages' | 'assets' | 'icons' | 'mine'>('components')
+const activeRail = ref<'ai' | 'components' | 'pages' | 'assets' | 'icons' | 'mine'>('ai')
 const activeTab = ref<'components' | 'pages' | 'templates'>('components')
 const keyword = ref('')
 const assetKeyword = ref('')
@@ -80,6 +81,7 @@ onMounted(() => templatesStore.loadCustomTemplates())
 <template>
   <aside class="left-workspace">
     <nav class="left-rail">
+      <button :class="{ active: activeRail === 'ai' }" @click="chooseRail('ai')"><i class="i-tabler-sparkles" /><span>AI</span></button>
       <button :class="{ active: activeRail === 'components' }" @click="chooseRail('components')"><i class="i-tabler-layout-grid" /><span>组件</span></button>
       <button :class="{ active: activeRail === 'pages' }" @click="chooseRail('pages')"><i class="i-tabler-file-text" /><span>页面</span></button>
       <button :class="{ active: activeRail === 'assets' }" @click="chooseRail('assets')"><i class="i-tabler-photo" /><span>素材</span></button>
@@ -88,7 +90,8 @@ onMounted(() => templatesStore.loadCustomTemplates())
     </nav>
 
     <div class="library-panel">
-      <template v-if="activeRail === 'components' || activeRail === 'pages'">
+      <AgentPanel v-if="activeRail === 'ai'" />
+      <template v-else-if="activeRail === 'components' || activeRail === 'pages'">
         <div class="panel-tabs">
           <button :class="{ active: activeTab === 'components' }" @click="activeTab = 'components'; activeRail = 'components'">组件</button>
           <button :class="{ active: activeTab === 'pages' }" @click="activeTab = 'pages'; activeRail = 'pages'">页面</button>

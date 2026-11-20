@@ -1,4 +1,5 @@
 import type { PageSchema } from '@/types/schema'
+import { resolveTokensDeep } from '@/design/tokens'
 
 export function exportAsJSON(schema: PageSchema): string {
   return JSON.stringify(schema, null, 2)
@@ -35,9 +36,9 @@ function escapeHTML(value: unknown) {
 }
 
 function renderComponent(component: any): string {
-  const props = component.props || {}
+  const props = resolveTokensDeep(component.props || {}, 'static')
   const children = Array.isArray(component.children) ? component.children.map(renderComponent).join('') : ''
-  const style = toStyleString(component.styles || {})
+  const style = toStyleString(resolveTokensDeep(component.styles || {}, 'static'))
 
   if (component.type === 'text') return `<div style="${style}">${escapeHTML(props.content)}</div>`
   if (component.type === 'image') {
@@ -56,7 +57,7 @@ function renderComponent(component: any): string {
 
 export function exportAsHTML(schema: PageSchema): string {
   const components = schema.components.map(renderComponent).join('\n')
-  const globalStyle = toStyleString(schema.globalStyles || {})
+  const globalStyle = toStyleString(resolveTokensDeep(schema.globalStyles || {}, 'static'))
   return `<!doctype html>
 <html lang="zh-CN">
 <head>
