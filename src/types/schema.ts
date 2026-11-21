@@ -21,6 +21,7 @@ export interface PageSchema {
   components: ComponentSchema[] // 页面组件列表
   globalStyles?: Record<string, any> // 全局样式
   meta?: PageMeta // 页面元信息
+  canvasPos?: { x: number, y: number } // 画布上画框的位置，未设置时按顺序自动排列
 }
 
 // 页面元信息

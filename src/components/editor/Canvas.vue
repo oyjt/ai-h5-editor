@@ -107,13 +107,20 @@ let animTimer: ReturnType<typeof setTimeout> | undefined
 
 const scale = computed(() => editorStore.canvasZoom / 100)
 const frameSize = computed(() => (editorStore.deviceMode === 'tablet' ? { w: 462, h: 810 } : { w: 390, h: 844 }))
-const frames = computed(() => editorStore.pages.map((page, index) => ({
-  page,
-  index,
-  x: index * (frameSize.value.w + FRAME_GAP),
-  y: 0,
-  active: index === editorStore.currentPageIndex,
-})))
+const dragPos = ref<{ index: number, x: number, y: number } | null>(null)
+const guides = ref<{ axis: 'x' | 'y', pos: number }[]>([])
+const frames = computed(() => {
+  const { w } = frameSize.value
+  let right = -FRAME_GAP
+  return editorStore.pages.map((page, index) => {
+    const saved = page.canvasPos
+    let x = saved ? saved.x : right + FRAME_GAP
+    let y = saved ? saved.y : 0
+    if (dragPos.value?.index === index) { x = dragPos.value.x; y = dragPos.value.y }
+    right = Math.max(right, x + w)
+    return { page, index, x, y, active: index === editorStore.currentPageIndex }
+  })
+})
 const worldStyle = computed(() => ({ transform: `translate(${pan.value.x}px, ${pan.value.y}px) scale(${scale.value})` }))
 const toolsStyle = computed(() => ({ transform: `scale(${1 / scale.value})` }))
 
@@ -154,11 +161,14 @@ function centerOnPage(index = editorStore.currentPageIndex, animate = true) {
 function fitAll() {
   const list = frames.value
   if (!list.length) return
-  const w = list.length * frameSize.value.w + (list.length - 1) * FRAME_GAP
-  const h = frameSize.value.h
+  const { w, h } = frameSize.value
+  const minX = Math.min(...list.map(f => f.x))
+  const minY = Math.min(...list.map(f => f.y))
+  const maxX = Math.max(...list.map(f => f.x + w))
+  const maxY = Math.max(...list.map(f => f.y + h))
   const area = { w: viewport.value.w - RULER - 96, h: viewport.value.h - RULER - 96 }
-  const percent = Math.max(MIN_ZOOM, Math.min(100, Math.floor(Math.min(area.w / w, area.h / h) * 100)))
-  centerOnRect(0, 0, w, h, percent)
+  const percent = Math.max(MIN_ZOOM, Math.min(100, Math.floor(Math.min(area.w / (maxX - minX), area.h / (maxY - minY)) * 100)))
+  centerOnRect(minX, minY, maxX - minX, maxY - minY, percent)
 }
 function resetTo100() { centerOnPage(editorStore.currentPageIndex); zoomAround(RULER + (viewport.value.w - RULER) / 2, RULER + (viewport.value.h - RULER) / 2, 100, true) }
 
@@ -173,6 +183,72 @@ watch(() => editorStore.canvasZoom, (next, prev) => {
 // 切换当前页（页面管理 / AI）后把它带到视野中央
 watch(() => editorStore.currentPageIndex, () => centerOnPage())
 watch(() => editorStore.deviceMode, () => nextTick(() => centerOnPage(undefined, false)))
+
+// ───────── 画框拖动：吸附到其他画框的边 / 中线，松手后记住位置 ─────────
+const SNAP = 8
+let frameDrag: { index: number, px: number, py: number, ox: number, oy: number, moved: boolean } | null = null
+let suppressClick = false
+
+function startFrameDrag(e: PointerEvent, index: number) {
+  if (e.button !== 0 || spaceDown.value || marqueeOn.value) return
+  const f = frames.value[index]
+  frameDrag = { index, px: e.clientX, py: e.clientY, ox: f.x, oy: f.y, moved: false }
+  window.addEventListener('pointermove', onFrameMove)
+  window.addEventListener('pointerup', endFrameDrag, { once: true })
+}
+function snapAxis(value: number, size: number, others: number[][], threshold: number) {
+  // value 为画框起点；候选线取其起点、中点、终点
+  let best: { delta: number, line: number } | null = null
+  for (const probe of [0, size / 2, size]) {
+    for (const [a, b, c] of others) {
+      for (const line of [a, b, c]) {
+        const delta = line - (value + probe)
+        if (Math.abs(delta) <= threshold && (!best || Math.abs(delta) < Math.abs(best.delta))) best = { delta, line }
+      }
+    }
+  }
+  return best
+}
+function onFrameMove(e: PointerEvent) {
+  if (!frameDrag) return
+  const dx = (e.clientX - frameDrag.px) / scale.value
+  const dy = (e.clientY - frameDrag.py) / scale.value
+  if (!frameDrag.moved && Math.abs(dx) + Math.abs(dy) < 4 / scale.value) return
+  frameDrag.moved = true
+  let x = frameDrag.ox + dx
+  let y = frameDrag.oy + dy
+  const { w, h } = frameSize.value
+  const others = frames.value.filter(f => f.index !== frameDrag!.index)
+  const threshold = SNAP / scale.value
+  const sx = snapAxis(x, w, others.map(f => [f.x, f.x + w / 2, f.x + w]), threshold)
+  const sy = snapAxis(y, h, others.map(f => [f.y, f.y + h / 2, f.y + h]), threshold)
+  const next: { axis: 'x' | 'y', pos: number }[] = []
+  if (sx) { x += sx.delta; next.push({ axis: 'x', pos: sx.line }) }
+  if (sy) { y += sy.delta; next.push({ axis: 'y', pos: sy.line }) }
+  guides.value = next
+  dragPos.value = { index: frameDrag.index, x, y }
+}
+function endFrameDrag() {
+  window.removeEventListener('pointermove', onFrameMove)
+  const drag = frameDrag
+  frameDrag = null
+  guides.value = []
+  if (drag?.moved && dragPos.value) {
+    editorStore.setPagePosition(drag.index, dragPos.value.x, dragPos.value.y)
+    editorStore.savePage()
+    suppressClick = true
+    setTimeout(() => { suppressClick = false }, 0)
+  }
+  dragPos.value = null
+}
+function activateFrame(index: number) {
+  if (suppressClick) return
+  editorStore.switchPage(index)
+}
+function arrange() {
+  editorStore.arrangePages()
+  void nextTick(fitAll)
+}
 
 function canScrollInside(target: EventTarget | null, dy: number) {
   const el = (target as HTMLElement | null)?.closest?.('.page-content') as HTMLElement | null
@@ -250,6 +326,7 @@ onMounted(() => {
   shellRef.value!.addEventListener('wheel', onWheel, { passive: false })
 })
 onBeforeUnmount(() => {
+  window.removeEventListener('pointermove', onFrameMove)
   observer?.disconnect()
   window.removeEventListener('keydown', onKeydown)
   window.removeEventListener('keyup', onKeyup)
@@ -298,7 +375,7 @@ const ticksY = computed(() => ticks('y'))
         :class="{ active: f.active }"
         :style="{ left: `${f.x}px`, top: `${f.y}px`, width: `${frameSize.w}px` }"
       >
-        <button type="button" class="frame-name" :style="{ transform: `scale(${1 / scale})` }" @click="editorStore.switchPage(f.index)">{{ f.page.name }}</button>
+        <button type="button" class="frame-name" :style="{ transform: `scale(${1 / scale})` }" title="拖动可移动画框，点击切换为当前页" @pointerdown="startFrameDrag($event, f.index)" @click="activateFrame(f.index)">{{ f.page.name }}</button>
 
         <div
           v-if="f.active"
@@ -327,10 +404,11 @@ const ticksY = computed(() => ticks('y'))
           </div>
         </div>
 
-        <div v-else role="button" tabindex="0" class="device-frame idle" :class="{ tablet: editorStore.deviceMode === 'tablet' }" :style="{ width: `${frameSize.w}px`, height: `${frameSize.h}px` }" :aria-label="`切换到页面：${f.page.name}`" @click="editorStore.switchPage(f.index)" @keydown.enter="editorStore.switchPage(f.index)">
+        <div v-else role="button" tabindex="0" class="device-frame idle" :class="{ tablet: editorStore.deviceMode === 'tablet' }" :style="{ width: `${frameSize.w}px`, height: `${frameSize.h}px` }" :aria-label="`切换到页面：${f.page.name}`" @pointerdown="startFrameDrag($event, f.index)" @click="activateFrame(f.index)" @keydown.enter="activateFrame(f.index)">
           <span class="device-screen idle-screen"><span class="idle-inner"><PageRenderer :schema="f.page" /></span></span>
         </div>
       </div>
+      <i v-for="g in guides" :key="`${g.axis}${g.pos}`" class="guide" :class="g.axis" :style="g.axis === 'x' ? { left: `${g.pos}px`, width: `${1 / scale}px` } : { top: `${g.pos}px`, height: `${1 / scale}px` }" />
     </div>
 
     <div class="ruler ruler-corner" />
@@ -345,9 +423,10 @@ const ticksY = computed(() => ticks('y'))
     <div class="canvas-controls" role="toolbar" aria-label="画布视图">
       <button type="button" title="适应全部页面（Shift+1）" @click="fitAll"><i class="i-tabler-arrows-maximize" /></button>
       <button type="button" title="定位到当前页（Shift+2）" @click="centerOnPage()"><i class="i-tabler-focus-centered" /></button>
+      <button type="button" title="整理页面：恢复横向排列并适应画布" @click="arrange"><i class="i-tabler-layout-distribute-horizontal" /></button>
       <button type="button" class="zoom-text" title="恢复 100%（Shift+0）" @click="resetTo100">{{ editorStore.canvasZoom }}%</button>
     </div>
-    <div class="canvas-hint">滚轮平移 · Ctrl/⌘ + 滚轮缩放 · 空格或拖动空白处移动画布</div>
+    <div class="canvas-hint">滚轮平移 · Ctrl/⌘ + 滚轮缩放 · 拖动画框名称移动页面</div>
   </div>
 </template>
 
@@ -357,7 +436,8 @@ const ticksY = computed(() => ticks('y'))
 .canvas-shell.hand-ready{cursor:grab}.canvas-shell.hand-ready .frame{pointer-events:none}.canvas-shell.is-panning{cursor:grabbing}
 .world{position:absolute;left:0;top:0;width:0;height:0;transform-origin:0 0;will-change:transform}.world.animating{transition:transform .25s ease}
 .frame{position:absolute}
-.frame-name{position:absolute;left:0;top:-30px;transform-origin:left bottom;border:0;background:transparent;color:#65758a;font-size:12px;cursor:pointer;padding:2px 4px;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.frame.active .frame-name{color:#1769ff;font-weight:600}.frame-name:hover{color:#1769ff}
+.guide{position:absolute;background:#f0467d;pointer-events:none;z-index:30}.guide.x{top:-20000px;height:40000px}.guide.y{left:-20000px;width:40000px}
+.frame-name{cursor:grab;touch-action:none;position:absolute;left:0;top:-30px;transform-origin:left bottom;border:0;background:transparent;color:#65758a;font-size:12px;padding:2px 4px;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.frame.active .frame-name{color:#1769ff;font-weight:600}.frame-name:hover{color:#1769ff}
 .ruler{position:absolute;z-index:4;color:#a7b3c3;font-size:9px;pointer-events:none;background:rgba(248,250,253,.94);backdrop-filter:blur(8px);overflow:hidden}
 .ruler-corner{left:0;top:0;width:24px;height:24px;z-index:5;border-right:1px solid #e7edf4;border-bottom:1px solid #e7edf4}
 .ruler-x{left:0;right:0;top:0;height:24px;border-bottom:1px solid #e7edf4}.ruler-y{left:0;top:0;bottom:0;width:24px;border-right:1px solid #e7edf4}

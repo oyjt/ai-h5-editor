@@ -32,8 +32,8 @@ function persistPage(showMessage = false) {
 const autoSave = useDebounceFn(() => persistPage(false), 900)
 watch(() => editorStore.currentPage, () => autoSave(), { deep: true })
 
-function handleUndo() { const page = historyStore.undo(); if (page) editorStore.currentPage = page }
-function handleRedo() { const page = historyStore.redo(); if (page) editorStore.currentPage = page }
+function handleUndo() { const page = historyStore.undo(); if (page) editorStore.restoreCurrentPage(page) }
+function handleRedo() { const page = historyStore.redo(); if (page) editorStore.restoreCurrentPage(page) }
 function handleSave() { persistPage(true) }
 async function handleRename() {
   try {

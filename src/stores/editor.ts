@@ -78,6 +78,7 @@ export const useEditorStore = defineStore('editor', () => {
     const duplicate = cloneSchema(source)
     duplicate.id = `${source.id}-copy-${Date.now()}`
     duplicate.name = `${source.name || `页面 ${index + 1}`} 副本`
+    delete duplicate.canvasPos
     duplicate.meta = {
       title: duplicate.name,
       description: duplicate.meta?.description ?? '',
@@ -210,6 +211,25 @@ export const useEditorStore = defineStore('editor', () => {
 
   function selectComponent(id: string | null) { selectedComponentId.value = id }
   function hoverComponent(id: string | null) { hoveredComponentId.value = id }
+  /** 记录画框在画布上的位置 */
+  function setPagePosition(index: number, x: number, y: number) {
+    const page = pages.value[index]
+    if (!page) return
+    const pos = { x: Math.round(x), y: Math.round(y) }
+    page.canvasPos = pos
+    if (index === currentPageIndex.value) currentPage.value.canvasPos = pos
+  }
+  /** 清除所有自定义位置，恢复按顺序横向排列 */
+  function arrangePages() {
+    for (const page of pages.value) delete page.canvasPos
+    delete currentPage.value.canvasPos
+    savePage()
+  }
+  /** 撤销 / 重做时换入历史快照，但保留画框位置（位置不进历史） */
+  function restoreCurrentPage(snapshot: PageSchema) {
+    snapshot.canvasPos = currentPage.value.canvasPos
+    currentPage.value = snapshot
+  }
   function setCanvasZoom(value: number) { canvasZoom.value = Math.min(400, Math.max(10, Math.round(value))) }
   function setDeviceMode(value: 'mobile' | 'tablet') { deviceMode.value = value }
 
@@ -302,6 +322,9 @@ export const useEditorStore = defineStore('editor', () => {
     selectComponent,
     hoverComponent,
     setCanvasZoom,
+    setPagePosition,
+    arrangePages,
+    restoreCurrentPage,
     setDeviceMode,
     setCurrentPage,
     clearPage,
