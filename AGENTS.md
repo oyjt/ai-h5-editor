@@ -6,7 +6,7 @@
 
 修改 UI、交互或新增页面前，按顺序阅读：
 
-1. `README.md`
+1. `README.md`、`docs/features.md`、`docs/development.md`
 2. `DESIGN.md`
 3. `docs/design-system.md`
 4. 与目标模块相关的现有 Vue 组件和 Store
@@ -17,7 +17,6 @@
 
 > 2026-11 经产品方确认，范围扩展为 ud-design 阶段 1：对话式 Agent 生成与框选改图、Design Token（Ant Design + Style Dictionary + UnoCSS）、规范校验。
 > 2026-11 按页面原型继续扩展为阶段 2：Cmd/Ctrl+K 快速发起与任务悬浮岛、风格库（二次蒸馏、采纳/驳回、发布版本）、设计转代码（Vue/CSS/DSL）、多页面连续画布。MCP 服务仍不在范围内。技术栈保持 Vue 3。
-
 
 当前核心流程：
 
