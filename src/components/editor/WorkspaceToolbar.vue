@@ -74,9 +74,9 @@ async function handleRename() {
         <ElTooltip content="平板预览" placement="bottom"><button :class="{ active: editorStore.deviceMode === 'tablet' }" @click="editorStore.setDeviceMode('tablet')"><i class="i-tabler-device-tablet" /></button></ElTooltip>
       </div>
       <div class="zoom-control">
-        <button title="缩小" :disabled="editorStore.canvasZoom <= 50" @click="editorStore.setCanvasZoom(editorStore.canvasZoom - 10)">−</button>
+        <button title="缩小" :disabled="editorStore.canvasZoom <= 10" @click="editorStore.setCanvasZoom(editorStore.canvasZoom - 10)">−</button>
         <span>{{ editorStore.canvasZoom }}%</span>
-        <button title="放大" :disabled="editorStore.canvasZoom >= 150" @click="editorStore.setCanvasZoom(editorStore.canvasZoom + 10)">+</button>
+        <button title="放大" :disabled="editorStore.canvasZoom >= 400" @click="editorStore.setCanvasZoom(editorStore.canvasZoom + 10)">+</button>
       </div>
       <ElButton class="action-button preview" @click="showPreviewDialog = true"><i class="i-tabler-player-play mr-6px" />预览</ElButton>
       <ElButton class="action-button" @click="handleSave">保存</ElButton>

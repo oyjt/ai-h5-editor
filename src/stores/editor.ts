@@ -210,7 +210,7 @@ export const useEditorStore = defineStore('editor', () => {
 
   function selectComponent(id: string | null) { selectedComponentId.value = id }
   function hoverComponent(id: string | null) { hoveredComponentId.value = id }
-  function setCanvasZoom(value: number) { canvasZoom.value = Math.min(150, Math.max(50, value)) }
+  function setCanvasZoom(value: number) { canvasZoom.value = Math.min(400, Math.max(10, Math.round(value))) }
   function setDeviceMode(value: 'mobile' | 'tablet') { deviceMode.value = value }
 
   function setCurrentPage(page: PageSchema) {
